@@ -50,10 +50,12 @@ export function GuestListSection({
     handleExport,
     handleGenerateQR,
     handleBulkGenerateQR,
+    handleBulkApprove,
   } = useGuestActions(slug, onRefresh);
 
   const selectedGuests = guests.filter(g => selectedGuestIds.has(g.registrant_id));
   const selectedRegisteredGuests = selectedGuests.filter(g => g.is_registered);
+  const selectedPendingGuests = selectedGuests.filter(g => !g.is_registered);
 
   const allSelected = filteredGuests.length > 0 && 
     filteredGuests.every(g => selectedGuestIds.has(g.registrant_id));
@@ -100,6 +102,24 @@ export function GuestListSection({
 
         {/* Guest List Content */}
         <div className="p-4 md:p-6">
+          {/* Bulk Action Bar */}
+          {selectedGuestIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-3 mb-4 p-3 bg-white/5 border border-white/10 rounded-xl">
+              <span className="font-urbanist text-sm text-white/70">
+                {selectedGuestIds.size} selected
+              </span>
+              {selectedPendingGuests.length > 0 && (
+                <button
+                  onClick={() => handleBulkApprove(selectedGuests)}
+                  disabled={isPending}
+                  className="font-urbanist px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Approve {selectedPendingGuests.length} Registration{selectedPendingGuests.length > 1 ? "s" : ""}
+                </button>
+              )}
+            </div>
+          )}
           {filteredGuests.length === 0 ? (
             <GuestListEmpty hasGuests={guests.length > 0} />
           ) : (

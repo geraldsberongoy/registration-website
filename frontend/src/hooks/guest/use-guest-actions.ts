@@ -107,6 +107,36 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
     [slug, showSuccess, showError],
   );
 
+  const handleBulkApprove = useCallback(
+    async (guests: Guest[]) => {
+      const pendingGuests = guests.filter((g) => !g.is_registered);
+      if (pendingGuests.length === 0) {
+        showError("No pending guests selected");
+        return;
+      }
+
+      startTransition(async () => {
+        const results = await Promise.all(
+          pendingGuests.map((g) =>
+            updateGuestStatusAction({ guestId: g.registrant_id, isRegistered: true }, slug),
+          ),
+        );
+
+        const failed = results.filter((r) => !r.success).length;
+        if (failed === 0) {
+          onRefresh();
+          showSuccess(
+            `${pendingGuests.length} guest${pendingGuests.length > 1 ? "s" : ""} approved successfully`,
+          );
+        } else {
+          onRefresh();
+          showError(`${failed} approval${failed > 1 ? "s" : ""} failed`);
+        }
+      });
+    },
+    [slug, onRefresh, showSuccess, showError],
+  );
+
   return {
     isPending,
     handleDeleteGuest,
@@ -114,5 +144,6 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
     handleExport,
     handleGenerateQR,
     handleBulkGenerateQR,
+    handleBulkApprove,
   };
 }
