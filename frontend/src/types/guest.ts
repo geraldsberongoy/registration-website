@@ -14,8 +14,9 @@ export interface Guest {
 }
 
 export interface GuestStats {
+  totalRsvp: number;
   totalRegistered: number;
-  going: number;
   checkedIn: number;
   waitlist: number;
+  notGoing: number;
 }
