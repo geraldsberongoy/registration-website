@@ -35,6 +35,7 @@ export default function SurveyForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [certificateBase64, setCertificateBase64] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   // If initialAnswers exists, the view mode condition below handles the summary view.
   // If initialAnswers is null, we render the form directly in 'create' mode (isEditing=false).
@@ -68,6 +69,9 @@ export default function SurveyForm({
         setError(result.error);
       } else {
         setSubmitted(true);
+        if (result.data?.certificateBase64) {
+          setCertificateBase64(result.data.certificateBase64);
+        }
         // If we were editing, stay in view mode or show success
         setIsEditing(false);
       }
@@ -117,6 +121,31 @@ export default function SurveyForm({
           Your feedback has been recorded. We appreciate you taking the time to
           help us improve.
         </p>
+
+        {certificateBase64 && (
+          <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
+            <h3 className="text-2xl font-bold text-cyan-400 mb-6 font-urbanist flex items-center justify-center gap-2">
+              <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+              Your Certificate of Participation
+            </h3>
+            <div className="relative w-full max-w-3xl mx-auto rounded-xl overflow-hidden shadow-[0_0_40px_rgba(8,145,178,0.3)] border border-cyan-500/30 group">
+              {/* Display the Base64 PNG inline */}
+              <img
+                src={`data:image/png;base64,${certificateBase64}`}
+                alt="Certificate"
+                className="w-full h-auto object-contain bg-white/5 transition-transform duration-500 group-hover:scale-[1.02]"
+              />
+            </div>
+            <a
+              href={`data:image/png;base64,${certificateBase64}`}
+              download={`Certificate_${slug}.png`}
+              className="mt-8 inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white rounded-xl font-bold transition-all shadow-xl hover:shadow-cyan-500/30 font-urbanist tracking-wide"
+            >
+              Download Certificate
+            </a>
+          </div>
+        )}
+
         <button
           onClick={() => router.push(`/event/${slug}`)}
           className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all border border-white/10 hover:border-white/20 shadow-lg hover:shadow-cyan-500/10 font-urbanist"
