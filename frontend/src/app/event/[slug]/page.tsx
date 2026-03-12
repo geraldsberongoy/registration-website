@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { LogOut, Clock } from "lucide-react";
 import BokehBackground from "@/components/create-event/bokeh-background";
 import Squares from "@/components/create-event/squares-background";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { LoadingScreen } from "@/components/ui/loading-screen"; 
 import { ErrorState } from "@/components/ui/error-state";
 import { EventCoverImage } from "@/components/event/event-cover-image";
 import { EventDateTime } from "@/components/event/event-date-time";
@@ -16,8 +16,8 @@ import { EventShareCard } from "@/components/event/event-share-card";
 import { EventAbout } from "@/components/event/event-about";
 import { EventHost } from "@/components/event/event-host";
 import { LocationMapPreview } from "@/components/event/location-map-preview";
-import { createClient } from "@/lib/supabase/client";
 import { useEvent } from "@/hooks/event/use-event";
+import { getCurrentUserEmail } from "@/app/event/actions"; 
 
 import { setLastViewedEventSlug } from "@/utils/last-viewed-event";
 import { logoutAction } from "@/actions/authActions";
@@ -83,14 +83,12 @@ export default function EventPage() {
           // Set email
           setHostEmail(result.data.email || undefined);
         } else {
-          // Fallback: check if it's the current logged-in user
-          const supabase = createClient();
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          // Fallback: check if it's the current logged-in user using your Server Action
+          const currentUser = await getCurrentUserEmail();
           
-          if (authUser && authUser.id === event.organizerId) {
-            const fullName = authUser.user_metadata?.full_name;
-            setHostName(fullName || authUser.email || "You");
-            setHostEmail(authUser.email || undefined);
+          if (currentUser && currentUser.id === event.organizerId) {
+            setHostName(currentUser.email ?? "You");
+            setHostEmail(currentUser.email ?? undefined);
           } else {
             setHostName("Event Organizer");
             setHostEmail(undefined);
@@ -161,7 +159,15 @@ export default function EventPage() {
   }, [refetch, router]);
 
   if (loading) {
-    return <LoadingSpinner message="Loading event..." />;
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-[#0a1f14] via-[#0a1520] to-[#120c08] text-white relative overflow-hidden font-montserrat">
+        <BokehBackground />
+        <Squares direction="diagonal" speed={0.3} />
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <LoadingScreen message="LOADING EVENT..." colorTheme="orange" />
+        </div>
+      </div>
+    );
   }
 
   if (error || !event) {

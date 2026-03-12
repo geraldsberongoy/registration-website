@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { AdminNavbar } from "@/components/admin/admin-navbar";
 import BokehBackground from "@/components/create-event/bokeh-background";
 import Squares from "@/components/create-event/squares-background";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { ErrorState } from "@/components/ui/error-state";
 import { useEvent } from "@/hooks/event/use-event";
 import { useGuests } from "@/hooks/guest/use-guests";
@@ -50,7 +50,15 @@ export default function ManageEventPage() {
   }, [canManage, roleLoading, loading, event, slug, router]);
 
   if (loading || roleLoading) {
-    return <LoadingSpinner message="Loading event management..." />;
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-[#0a1f14] via-[#0a1520] to-[#120c08] text-white relative overflow-hidden font-urbanist">
+        <BokehBackground />
+        <Squares direction="diagonal" speed={0.3} />
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <LoadingScreen message="LOADING EVENT MANAGEMENT..." colorTheme="orange" />
+        </div>
+      </div>
+    );
   }
 
   if (error || !event) {
@@ -64,7 +72,15 @@ export default function ManageEventPage() {
   }
 
   if (!canManage) {
-    return <LoadingSpinner message="Redirecting..." />;
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-[#0a1f14] via-[#0a1520] to-[#120c08] text-white relative overflow-hidden font-urbanist">
+        <BokehBackground />
+        <Squares direction="diagonal" speed={0.3} />
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <LoadingScreen message="REDIRECTING..." colorTheme="orange" />
+        </div>
+      </div>
+    );
   }
 
   const eventUrl = `${window.location.origin}/event/${slug}`;
@@ -81,7 +97,7 @@ export default function ManageEventPage() {
 
       <AdminNavbar activeTab="events" />
 
-      <main className="relative z-10 w-full max-w-6xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-10 pb-16 mt-16">
+      <main className="relative z-10 w-full max-w-6xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-10 pb-16 mt-16 animate-in fade-in duration-500">
         <div className="flex items-center justify-between gap-3 mb-4 md:mb-6">
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white truncate">
