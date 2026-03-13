@@ -135,10 +135,11 @@ export default function ManageEventPage() {
         {activeTab === "guests" && (
           <>
             <GuestStatistics
+              totalRsvp={stats?.totalRsvp || 0}
               totalRegistered={stats?.totalRegistered || 0}
-              going={stats?.going || 0}
               checkedIn={stats?.checkedIn || 0}
               waitlist={stats?.waitlist || 0}
+              notGoing={stats?.notGoing || 0}
             />
             <GuestListSection
               guests={guests}
