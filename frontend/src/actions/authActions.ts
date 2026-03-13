@@ -90,3 +90,45 @@ export const logoutAction = withActionErrorHandler(async () => {
 
   logger.info("User logged out successfully");
 });
+
+function getResetRedirectUrl(): string {
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.VERCEL_URL;
+
+  if (!configuredUrl) {
+    return "http://localhost:3000/reset-password";
+  }
+
+  const withProtocol = configuredUrl.startsWith("http")
+    ? configuredUrl
+    : `https://${configuredUrl}`;
+
+  const normalized = withProtocol.endsWith("/")
+    ? withProtocol.slice(0, -1)
+    : withProtocol;
+
+  return `${normalized}/reset-password`;
+}
+
+// forgot password action
+export const forgotPasswordAction = withActionErrorHandler(
+  async (prevState: AuthResult | null, formData: FormData) => {
+    const email = (formData.get("email") as string)?.trim() ?? "";
+
+    const { ForgotPasswordSchema } = await import("@/validators/authValidators");
+    const { requestPasswordReset } = await import("@/services/authService");
+
+    ForgotPasswordSchema.parse({ email });
+
+    const redirectTo = getResetRedirectUrl();
+    await requestPasswordReset(email, redirectTo);
+
+    logger.info(`Password reset requested for email: ${email}`);
+    return {
+      message:
+        "If an account exists for this email, a password reset link has been sent.",
+    };
+  },
+);

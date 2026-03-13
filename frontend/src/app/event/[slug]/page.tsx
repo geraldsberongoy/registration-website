@@ -268,6 +268,7 @@ export default function EventPage() {
               isUserRegistered={registrationStatus?.isRegistered || false}
               registrationApprovalStatus={registrationStatus?.registrationStatus || null}
               qrUrl={registrationStatus?.qrUrl ?? null}
+              forgotPasswordHref={`/forgot-password?next=${encodeURIComponent(`/event/${slug}/register`)}`}
               onRsvpClick={() => router.push(`/event/${slug}/register`)}
             />
 

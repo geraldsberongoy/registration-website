@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Mail, Lock, UserPlus, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { checkEmailAction } from "@/actions/authActions";
@@ -222,6 +223,14 @@ export function StepContinueWithEmail({
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
+            </div>
+            <div className="pt-1 text-right">
+              <Link
+                href="/forgot-password"
+                className="text-[11px] text-[#80d7d7] hover:text-[#a2e6e6] underline-offset-4 hover:underline"
+              >
+                Forgot Password?
+              </Link>
             </div>
           </div>
           <div className="flex gap-3 items-stretch pt-1">

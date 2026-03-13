@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { loginAction } from "@/actions/authActions";
@@ -162,6 +163,14 @@ export default function UserLoginForm({
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+          </div>
+          <div className="text-right pt-1">
+            <Link
+              href="/forgot-password"
+              className="text-[11px] text-[#80d7d7] hover:text-[#a2e6e6] underline-offset-4 hover:underline"
+            >
+              Forgot Password?
+            </Link>
           </div>
         </div>
 

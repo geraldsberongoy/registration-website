@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { CheckCircle, Users, Ticket, Check, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,7 @@ interface EventRegistrationCardProps {
   isUserRegistered?: boolean;
   registrationApprovalStatus?: "approved" | "pending" | null;
   qrUrl?: string | null;
+  forgotPasswordHref?: string;
   onRsvpClick: () => void;
 }
 
@@ -21,6 +23,7 @@ export function EventRegistrationCard({
   isUserRegistered = false,
   registrationApprovalStatus = null,
   qrUrl = null,
+  forgotPasswordHref = "/forgot-password",
   onRsvpClick,
 }: EventRegistrationCardProps) {
   const capacityNum = parseInt(capacity) || 0;
@@ -106,6 +109,17 @@ export function EventRegistrationCard({
             : "⏳ PENDING APPROVAL"
           : "RSVP"}
       </Button>
+
+      {!isUserRegistered && (
+        <div className="mt-3 text-center">
+          <Link
+            href={forgotPasswordHref}
+            className="text-[11px] text-[#80d7d7] hover:text-[#a2e6e6] underline-offset-4 hover:underline"
+          >
+            Forgot Password?
+          </Link>
+        </div>
+      )}
 
       {/* Event Details - Price & Capacity Info */}
       <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
