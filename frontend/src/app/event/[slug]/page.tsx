@@ -307,6 +307,25 @@ export default function EventPage() {
               }
               isGoing={registrationStatus?.isGoing ?? true}
               qrUrl={registrationStatus?.qrUrl ?? null}
+              eventTitle={event.title}
+              eventDate={
+                event.startDate
+                  ? new Date(event.startDate).toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : ""
+              }
+              eventTime={event.startTime || ""}
+              eventEndTime={event.endTime || ""}
+              eventLocation={event.location || ""}
+              attendeeName={
+                registrationStatus?.guest?.users
+                  ? `${registrationStatus.guest.users.first_name} ${registrationStatus.guest.users.last_name}`
+                  : "Guest"
+              }
               forgotPasswordHref={`/forgot-password?next=${encodeURIComponent(`/event/${slug}/register`)}`}
               onRsvpClick={() => router.push(`/event/${slug}/register`)}
               onNotGoingClick={async () => {
