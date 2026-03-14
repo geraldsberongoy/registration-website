@@ -47,7 +47,6 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
     Promise.all([
       import("leaflet"),
       import("leaflet/dist/leaflet.css"),
-      import("@/styles/leaflet-custom.css"),
     ]).then(([L]) => {
       // Double-check container still exists and isn't already initialized
       if (!container || (container as any)._leaflet_id) {
