@@ -271,7 +271,7 @@ export function EventRegistrationCard({
               </div>
 
               {/* Center QR Code */}
-              <div className="flex justify-center py-6 flex-1 flex items-center">
+              <div className="flex justify-center py-6 flex-1 items-center">
                 <div className="bg-white border-4 border-primary rounded-lg p-3">
                   <img
                     src={qrUrl}
@@ -312,7 +312,7 @@ export function EventRegistrationCard({
             <button
               onClick={handleDownloadTicket}
               disabled={downloadingTicket}
-              className="w-full inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3 rounded-lg bg-blue-600 text-white hover:shadow-lg hover:shadow-xl transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3 rounded-lg bg-blue-600 text-white hover:shadow-lg transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {downloadingTicket ? (
                 <Loader2 size={16} className="animate-spin" />

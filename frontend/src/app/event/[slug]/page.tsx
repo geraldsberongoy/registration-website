@@ -331,24 +331,20 @@ export default function EventPage() {
               onNotGoingClick={async () => {
                 const result = await setIsGoingAction(slug, false);
                 if (result.success) {
-                  showSuccess("Status updated to Not Going");
                   setRegistrationStatus((prev) =>
                     prev ? { ...prev, isGoing: false } : prev,
                   );
                 } else {
-                  console.error("Failed to set not going:", result.error);
                   showError(result.error || "Failed to update status");
                 }
               }}
               onGoingClick={async () => {
                 const result = await setIsGoingAction(slug, true);
                 if (result.success) {
-                  showSuccess("Status updated to Going");
                   setRegistrationStatus((prev) =>
                     prev ? { ...prev, isGoing: true } : prev,
                   );
                 } else {
-                  console.error("Failed to set going:", result.error);
                   showError(result.error || "Failed to update status");
                 }
               }}

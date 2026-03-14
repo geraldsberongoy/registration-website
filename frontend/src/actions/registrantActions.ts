@@ -80,9 +80,6 @@ export const updateGuestIsGoingAction = withActionErrorHandler(
 
 export const setIsGoingAction = withActionErrorHandler(
   async (eventSlug: string, isGoing: boolean) => {
-    console.log(
-      `[setIsGoingAction] Updating isGoing for event ${eventSlug} to ${isGoing}`,
-    );
     const { createClient } = await import("@/lib/supabase/server");
     const { getEventIdAndApprovalBySlug } =
       await import("@/repositories/eventRepository");
@@ -95,13 +92,11 @@ export const setIsGoingAction = withActionErrorHandler(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      console.error("[setIsGoingAction] User not authenticated");
       throw new UnauthorizedError("Not authenticated");
     }
 
     const eventData = await getEventIdAndApprovalBySlug(eventSlug);
     if (!eventData) {
-      console.error(`[setIsGoingAction] Event not found: ${eventSlug}`);
       throw new Error("Event not found");
     }
 
@@ -110,14 +105,10 @@ export const setIsGoingAction = withActionErrorHandler(
       eventData.event_id,
     );
     if (!registrant) {
-      console.error(
-        `[setIsGoingAction] Registration not found for user ${user.id} and event ${eventData.event_id}`,
-      );
       throw new Error("Registration not found");
     }
 
     await setIsGoing(registrant.registrant_id, isGoing);
-    console.log(`[setIsGoingAction] Successfully updated status`);
     revalidatePath(`/event/${eventSlug}`);
     return { success: true };
   },
