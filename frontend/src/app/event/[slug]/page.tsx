@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { LogOut, Clock } from "lucide-react";
+import { LogOut, Clock, ChevronRight } from "lucide-react";
 import BokehBackground from "@/components/create-event/bokeh-background";
 import Squares from "@/components/create-event/squares-background";
 import { LoadingScreen } from "@/components/ui/loading-screen";
@@ -47,7 +48,7 @@ export default function EventPage() {
     registrationStatus: "approved" | "pending" | null;
     isGoing?: boolean;
     qrUrl?: string | null;
-    guest?: Guest;
+    guest?: Guest | null;
   } | null>(null);
 
   const isLoggedIn = !roleLoading && userId != null;
@@ -67,6 +68,13 @@ export default function EventPage() {
     !roleLoading &&
     event &&
     (role === "admin" || (userId != null && userId === event.organizerId));
+
+  const breadcrumbParent =
+    role === "admin"
+      ? { label: "Admin Events", href: "/admin/events" }
+      : role === "user"
+        ? { label: "My Events", href: "/my-events" }
+        : { label: "Events", href: "/" };
 
   useEffect(() => {
     initialize();
@@ -145,28 +153,6 @@ export default function EventPage() {
       window.history.replaceState({}, "", url.toString());
     }
   }, [searchParams, refetch, router]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        router.refresh();
-        refetch();
-      }
-    };
-
-    const handleFocus = () => {
-      router.refresh();
-      refetch();
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [refetch, router]);
 
   const handleGenerateQR = async () => {
     if (!registrationStatus?.guest || !slug) return;
@@ -255,6 +241,17 @@ export default function EventPage() {
 
           {/* Right Column - Event Info */}
           <div className="animate-fade-in animate-delay-200">
+            <nav className="mb-4 flex items-center gap-2 text-sm" aria-label="Breadcrumb">
+              <Link
+                href={breadcrumbParent.href}
+                className="text-cyan-300/80 hover:text-cyan-200 transition-colors"
+              >
+                {breadcrumbParent.label}
+              </Link>
+              <ChevronRight className="w-4 h-4 text-white/35" />
+              <span className="text-white/80 truncate">{event.title}</span>
+            </nav>
+
             {/* Event Title */}
             <h1 className="font-urbanist text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight text-white">
               {event.title}
