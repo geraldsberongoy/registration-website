@@ -2,21 +2,30 @@ import { useCallback } from "react";
 
 /**
  * Hook for displaying user notifications
- * TODO: Replace with proper toast notification library (e.g., react-hot-toast, sonner)
  */
 export function useNotification() {
+  const emitToast = useCallback(
+    (type: "success" | "error", message: string) => {
+      if (typeof window === "undefined") return;
+
+      window.dispatchEvent(
+        new CustomEvent("app-toast", {
+          detail: { type, message },
+        }),
+      );
+    },
+    [],
+  );
+
   const showSuccess = useCallback((message: string) => {
-    // TODO: Replace with toast notification
-    alert(message);
-  }, []);
+    emitToast("success", message);
+  }, [emitToast]);
 
   const showError = useCallback((message: string) => {
-    // TODO: Replace with toast notification
-    alert(message);
-  }, []);
+    emitToast("error", message);
+  }, [emitToast]);
 
   const showConfirm = useCallback((message: string): boolean => {
-    // TODO: Replace with proper modal confirmation
     return confirm(message);
   }, []);
 
