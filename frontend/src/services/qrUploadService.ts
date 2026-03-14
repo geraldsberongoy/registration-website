@@ -1,5 +1,7 @@
+"use server"; // Ensure this runs on the server to protect your secret keys
 import { Guest } from "@/types/guest";
-import { generateQRCodeBlob, createQRDataFromGuest } from "@/services/qrService";
+// Importing our updated secure service functions
+import { generateSecureQRCode, createQRDataFromGuest } from "@/services/qrService"; 
 import { uploadQRToStorage, checkUserSession, updateRegistrantQrUrl } from "@/repositories/qrRepository";
 
 export interface QRUploadResult {
@@ -10,38 +12,43 @@ export interface QRUploadResult {
 }
 
 /**
- * Upload a single QR code to storage
- * Business logic for QR code generation and upload
+ * Business logic for a single QR code generation and upload
  */
 export async function uploadSingleQR(
   guest: Guest,
   eventSlug: string
 ): Promise<QRUploadResult> {
   try {
+    //  Security Check
     const isAuthenticated = await checkUserSession();
     if (!isAuthenticated) {
       return { success: false, error: 'You must be logged in to generate QR codes' };
     }
 
+    //  Format Data
     const qrData = createQRDataFromGuest(guest, eventSlug);
     if (!qrData) {
-      return { success: false, error: 'User data not available' };
+      return { success: false, error: 'Guest user data is missing' };
     }
 
-    const blobResult = await generateQRCodeBlob(qrData);
-    if (!blobResult.success || !blobResult.blob || !blobResult.fileName) {
-      return { success: false, error: blobResult.error || 'Failed to generate QR code' };
+    //  Generate Secure QR (Now returns a Buffer, not a Blob)
+    const qrResult = await generateSecureQRCode(qrData);
+    if (!qrResult.success || !qrResult.buffer || !qrResult.fileName) {
+      return { success: false, error: qrResult.error || 'Failed to generate secure QR' };
     }
 
-    const uploadResult = await uploadQRToStorage(blobResult.fileName, blobResult.blob);
+    // Upload to Storage (Passing the Buffer directly)
+    const uploadResult = await uploadQRToStorage(qrResult.fileName, qrResult.buffer);
     
     if (uploadResult.success && uploadResult.url) {
+      //  Link the URL to the registrant in the DB
       await updateRegistrantQrUrl(guest.registrant_id, uploadResult.url);
       return { success: true, url: uploadResult.url };
     }
+    
     return { success: false, error: uploadResult.error };
   } catch (error) {
-    console.error('Error uploading QR code:', error);
+    console.error('Error in uploadSingleQR:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -49,6 +56,9 @@ export async function uploadSingleQR(
   }
 }
 
+/**
+ * Handles batch generation for multiple guests
+ */
 export async function uploadBulkQR(
   guests: Guest[],
   eventSlug: string
@@ -57,32 +67,22 @@ export async function uploadBulkQR(
     let uploadedCount = 0;
 
     for (const guest of guests) {
-      if (!guest.users) continue;
-
-      const qrData = createQRDataFromGuest(guest, eventSlug);
-      if (!qrData) continue;
-
-      const blobResult = await generateQRCodeBlob(qrData);
-      if (!blobResult.success || !blobResult.blob || !blobResult.fileName) {
-        console.error(`Failed to generate QR for ${guest.registrant_id}`);
-        continue;
-      }
-
-      const uploadResult = await uploadQRToStorage(blobResult.fileName, blobResult.blob);
-
-      if (uploadResult.success && uploadResult.url) {
-        await updateRegistrantQrUrl(guest.registrant_id, uploadResult.url);
+      // Use our single upload logic for each guest
+      const result = await uploadSingleQR(guest, eventSlug);
+      
+      if (result.success) {
         uploadedCount++;
       } else {
-        console.error(`Failed to upload ${blobResult.fileName}:`, uploadResult.error);
+        console.error(`Skipping guest ${guest.registrant_id}: ${result.error}`);
       }
 
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Small delay to prevent hitting Supabase rate limits during bulk upload
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     return { success: true, count: uploadedCount };
   } catch (error) {
-    console.error('Error uploading bulk QR codes:', error);
+    console.error('Error in uploadBulkQR:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

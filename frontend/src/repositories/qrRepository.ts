@@ -1,47 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 
-export interface QRStorageResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-}
-
 /**
- * Upload QR code blob to storage (client-side only)
- */
-export async function uploadQRToStorage(
-  fileName: string,
-  blob: Blob
-): Promise<QRStorageResult> {
-  try {
-    const supabase = createClient();
-
-    const { error } = await supabase.storage
-      .from('ticket')
-      .upload(fileName, blob, {
-        contentType: 'image/png',
-        upsert: true
-      });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    const { data: urlData } = supabase.storage
-      .from('ticket')
-      .getPublicUrl(fileName);
-
-    return { success: true, url: urlData.publicUrl };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to upload QR code'
-    };
-  }
-}
-
-/**
- * Check if user is authenticated (client-side only)
+ * Check if user is authenticated (client-side helper)
  */
 export async function checkUserSession(): Promise<boolean> {
   try {
@@ -53,6 +13,10 @@ export async function checkUserSession(): Promise<boolean> {
   }
 }
 
+/**
+ * Updates the registrant's row with the generated QR URL.
+ * This can be called from the client or the server.
+ */
 export async function updateRegistrantQrUrl(
   registrantId: string,
   qrUrl: string
@@ -64,6 +28,13 @@ export async function updateRegistrantQrUrl(
     .eq('registrant_id', registrantId);
 
   if (error) {
-    console.error('Failed to save qr_url:', error.message);
+    console.error('Failed to save qr_url to database:', error.message);
+    throw new Error(error.message);
   }
 }
+
+/**
+ * NOTE: uploadQRToStorage (Blob version) is deprecated.
+ * We are now using uploadQRBufferToStorage in qrServerRepository.ts
+ * to support secure encryption and server-side Buffers.
+ */
