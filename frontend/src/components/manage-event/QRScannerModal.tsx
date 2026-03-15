@@ -23,6 +23,7 @@ import {
 import { Html5Qrcode } from "html5-qrcode";
 import Fuse from "fuse.js";
 import {
+  getManualCheckInGuestsAction,
   manualCheckInAction,
   undoCheckInAction,
   validateQRCodeAction,
@@ -90,15 +91,15 @@ export function QRScannerModal({
     setIsManualLoading(true);
     setManualError(null);
     try {
-      const response = await fetch(`/api/registrants/${eventSlug}`);
-      const data = await response.json();
-      if (!response.ok) {
-        setManualError(data.error || "Failed to fetch registrants");
+      const result = await getManualCheckInGuestsAction(eventSlug);
+      if (!result.success || !result.data?.success) {
+        setManualError(
+          result.data?.error || result.error || "Failed to fetch registrants",
+        );
         return;
       }
-      setManualGuests(
-        ((data.guests || []) as Guest[]).filter((g) => g.is_registered),
-      );
+
+      setManualGuests(result.data.guests || []);
     } catch (error) {
       console.error("Failed to fetch registrants for manual check-in:", error);
       setManualError("Failed to fetch registrants");

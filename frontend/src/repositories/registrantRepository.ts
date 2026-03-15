@@ -149,6 +149,8 @@ export async function getRegistrantsByEvent(eventId: string): Promise<Guest[]> {
       form_answers,
       is_registered,
       is_going,
+      check_in,
+      check_in_time,
       qr_data,
       users!users_id (
         first_name,

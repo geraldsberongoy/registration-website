@@ -8,12 +8,14 @@ import {
 } from "@/lib/utils/actionError";
 import {
   checkInRegistrant,
+  getRegistrantsByEvent,
   getRegistrantById,
   getRegistrantByQrData,
   undoCheckInRegistrant,
 } from "@/repositories/registrantRepository";
 import { getEventIdAndApprovalBySlug } from "@/repositories/eventRepository";
 import { parseRegistrantQrData } from "@/services/qrService";
+import { Guest } from "@/types/guest";
 
 export interface QRValidationResult {
   success: boolean;
@@ -29,6 +31,29 @@ export interface ManualCheckInResult {
   checkInTime?: string;
   error?: string;
 }
+
+export interface ManualGuestsResult {
+  success: boolean;
+  guests?: Guest[];
+  error?: string;
+}
+
+export const getManualCheckInGuestsAction = withActionErrorHandler(
+  async (eventSlug: string): Promise<ManualGuestsResult> => {
+    const canManage = await canManageEvent(eventSlug);
+    if (!canManage) {
+      throw new UnauthorizedError("Unauthorized to view registrants");
+    }
+
+    const eventData = await getEventIdAndApprovalBySlug(eventSlug);
+    const guests = await getRegistrantsByEvent(eventData.event_id);
+
+    return {
+      success: true,
+      guests: guests.filter((guest) => guest.is_registered),
+    };
+  },
+);
 
 export const validateQRCodeAction = withActionErrorHandler(
   async (qrData: string, eventSlug: string): Promise<QRValidationResult> => {
