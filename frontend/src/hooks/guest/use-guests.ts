@@ -39,13 +39,23 @@ function computeGuestStatistics(guests: Guest[]): GuestStats {
   const totalRsvp = guests.length;
   const totalRegistered = guests.filter((g) => g.is_registered && g.is_going !== false).length;
   const notGoing = guests.filter((g) => g.is_registered && g.is_going === false).length;
-  
+  const checkedIn = guests.filter((g) => g.check_in === true).length;
+  const going = guests.filter((g) => g.is_registered && g.is_going !== false).length;
+  const notResponded = guests.filter((g) => !g.is_registered).length;
+
+  const goingGuests = guests.filter((g) => g.is_registered && g.is_going !== false);
+  const ticketsReady = goingGuests.filter((g) => !!g.qr_data).length;
+  const ticketsMissing = goingGuests.filter((g) => !g.qr_data).length;
+
   return {
     totalRsvp,
     totalRegistered,
-    checkedIn: 0,
-    waitlist: 0,
+    checkedIn,
+    going,
     notGoing,
+    notResponded,
+    ticketsReady,
+    ticketsMissing,
   };
 }
 

@@ -7,6 +7,7 @@ export interface Guest {
   is_registered: boolean;
   is_going: boolean;
   qr_data: string | null;
+  check_in?: boolean | null;
   users: {
     first_name: string;
     last_name: string;
@@ -18,6 +19,9 @@ export interface GuestStats {
   totalRsvp: number;
   totalRegistered: number;
   checkedIn: number;
-  waitlist: number;
+  going: number;
   notGoing: number;
+  notResponded: number;
+  ticketsReady: number;
+  ticketsMissing: number;
 }

@@ -140,6 +140,7 @@ export async function getRegistrantsByEvent(eventId: string): Promise<Guest[]> {
       is_registered,
       is_going,
       qr_data,
+      check_in,
       users!users_id (
         first_name,
         last_name,

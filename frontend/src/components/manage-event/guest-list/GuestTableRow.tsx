@@ -107,7 +107,12 @@ export function GuestTableRow({
       </td>
       <td className="py-4 px-2 hidden lg:table-cell">
         <div className="flex justify-center">
-          {guest.is_registered && guest.is_going && guest.qr_data ? (
+          {guest.is_registered && guest.is_going && guest.check_in ? (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-2.5 py-1 text-xs font-medium text-cyan-300">
+              <Check size={11} />
+              Checked In
+            </span>
+          ) : guest.is_registered && guest.is_going && guest.qr_data ? (
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-300">
               Ready
             </span>

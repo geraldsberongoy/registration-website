@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { Guest } from "@/types/guest";
 import { EventData } from "@/types/event";
 import { useGuestSelection } from "@/hooks/guest/use-guest-selection";
@@ -70,6 +71,7 @@ export function GuestListSection({
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         eventSlug={slug}
+        onCheckInSuccess={onRefresh}
       />
 
       {/* Answers Modal */}
@@ -86,12 +88,20 @@ export function GuestListSection({
 
       <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
         {/* Header */}
-        <div className="p-4 md:p-6 border-b border-white/10">
-          <GuestListHeader 
-            guestCount={guests.length}
-            onExport={handleExport}
-            onCheckIn={() => setIsScannerOpen(true)}
-          />
+        <div className="p-4 md:p-6 border-b border-white/10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h4 className="font-semibold text-white">Attendee Guest List</h4>
+              <p className="text-sm text-white/50 mt-0.5">
+                Manage registrations, check-in status, and export
+              </p>
+            </div>
+            <GuestListHeader 
+              guestCount={guests.length}
+              onExport={handleExport}
+              onCheckIn={() => setIsScannerOpen(true)}
+            />
+          </div>
 
           {/* Search and Filter Bar */}
           <GuestListSearchFilter
@@ -110,13 +120,19 @@ export function GuestListSection({
               <span className="font-urbanist text-sm text-white/70">
                 {selectedGuestIds.size} selected
               </span>
+              <button
+                onClick={clearSelection}
+                className="font-urbanist px-3 py-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-colors"
+              >
+                Deselect all
+              </button>
               {selectedPendingGuests.length > 0 && (
                 <button
                   onClick={() => handleBulkApprove(selectedGuests)}
                   disabled={isPending}
-                  className="font-urbanist px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
+                  className="font-urbanist px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <Check size={14} />
                   Approve {selectedPendingGuests.length} Registration{selectedPendingGuests.length > 1 ? "s" : ""}
                 </button>
               )}
@@ -127,7 +143,7 @@ export function GuestListSection({
           ) : (
             /* Guest Table */
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[640px]">
                 <GuestTableHeader
                   allSelected={allSelected}
                   someSelected={someSelected}

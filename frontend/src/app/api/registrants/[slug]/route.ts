@@ -42,6 +42,7 @@ export async function GET(
         is_registered,
         is_going,
         qr_data,
+        check_in,
         users!users_id (
           first_name,
           last_name,

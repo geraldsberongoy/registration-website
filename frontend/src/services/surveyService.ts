@@ -56,8 +56,7 @@ export async function getSurveyDashboardStats(slug: string): Promise<SurveyDashb
   const surveyAnswered = surveyResponses.length;
   const registeredWithoutSurvey = Math.max(0, totalRegistered - surveyAnswered);
 
-  // checked_in not yet implemented - attended is 0 temporarily
-  const attended = 0;
+  const attended = registrants.filter((r) => r.is_registered && r.check_in === true).length;
 
   return {
     totalRegistered,

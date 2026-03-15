@@ -167,8 +167,11 @@ export default function ManageEventPage() {
               totalRsvp={stats?.totalRsvp || 0}
               totalRegistered={stats?.totalRegistered || 0}
               checkedIn={stats?.checkedIn || 0}
-              waitlist={stats?.waitlist || 0}
+              going={stats?.going || 0}
               notGoing={stats?.notGoing || 0}
+              notResponded={stats?.notResponded || 0}
+              ticketsReady={stats?.ticketsReady || 0}
+              ticketsMissing={stats?.ticketsMissing || 0}
             />
             <GuestListSection
               guests={guests}

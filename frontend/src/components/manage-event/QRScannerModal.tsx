@@ -16,12 +16,14 @@ interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   eventSlug: string;
+  onCheckInSuccess?: () => void;
 }
 
 export function QRScannerModal({
   isOpen,
   onClose,
   eventSlug,
+  onCheckInSuccess,
 }: QRScannerModalProps) {
   const SCAN_DEBOUNCE_MS = 1500;
   const [isScanning, setIsScanning] = useState(false);
@@ -65,6 +67,7 @@ export function QRScannerModal({
           guestName: result.data.guestName,
           guestEmail: result.data.guestEmail,
         });
+        onCheckInSuccess?.();
         // Success stays until user dismisses it — isProcessingRef stays true
         // so the same code won't re-trigger while the card is visible.
       } else {

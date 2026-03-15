@@ -105,8 +105,13 @@ function FeedbackModal({
             <p className="text-white/50">No feedback responses.</p>
           ) : (
             entries.map(({ question, answer }, idx) => (
-              <div key={idx} className="border-b border-white/5 pb-4 last:border-0 last:pb-0">
-                <p className="text-sm font-medium text-white/80 mb-1">{question}</p>
+              <div
+                key={idx}
+                className="border-b border-white/5 pb-4 last:border-0 last:pb-0"
+              >
+                <p className="text-sm font-medium text-white/80 mb-1">
+                  {question}
+                </p>
                 <p className="text-white">
                   {answer !== undefined && answer !== null
                     ? String(answer)
@@ -123,12 +128,21 @@ function FeedbackModal({
 
 function buildCsvFromRows(
   rows: SurveyResponderRow[],
-  surveyConfig?: SurveyConfig
+  surveyConfig?: SurveyConfig,
 ): string {
   const questions = surveyConfig?.questions ?? [];
-  const baseHeaders = ["email", "first_name", "last_name", "survey_answered", "survey_completed_at"];
+  const baseHeaders = [
+    "email",
+    "first_name",
+    "last_name",
+    "survey_answered",
+    "survey_completed_at",
+  ];
   const questionHeaders = questions.map((q) =>
-    (q.text || `Q_${q.id}`).replace(/"/g, '""').replace(/\n/g, " ").replace(/\r/g, "")
+    (q.text || `Q_${q.id}`)
+      .replace(/"/g, '""')
+      .replace(/\n/g, " ")
+      .replace(/\r/g, ""),
   );
   const headers = [...baseHeaders, ...questionHeaders];
 
@@ -149,20 +163,29 @@ function buildCsvFromRows(
 
   return [
     headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(","),
-    ...csvRows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
+    ...csvRows.map((row) =>
+      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+    ),
   ].join("\n");
 }
 
-export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardProps) {
+export default function SurveyDashboard({
+  slug,
+  surveyConfig,
+}: SurveyDashboardProps) {
   const [stats, setStats] = useState<SurveyDashboardStats | null>(null);
   const [details, setDetails] = useState<SurveyResponderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [feedbackRow, setFeedbackRow] = useState<SurveyResponderRow | null>(null);
+  const [feedbackRow, setFeedbackRow] = useState<SurveyResponderRow | null>(
+    null,
+  );
   const [searchQuery, setSearchQuery] = useState("");
-  const [surveyFilter, setSurveyFilter] = useState<"all" | "answered" | "not_answered">("all");
+  const [surveyFilter, setSurveyFilter] = useState<
+    "all" | "answered" | "not_answered"
+  >("all");
   const { showSuccess, showError } = useNotification();
 
   const filteredDetails = useMemo(() => {
@@ -175,40 +198,49 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
         row.email?.toLowerCase().includes(lowerQuery);
       const matchesSurvey =
         surveyFilter === "all" ||
-        (surveyFilter === "answered" ? row.survey_answered : !row.survey_answered);
+        (surveyFilter === "answered"
+          ? row.survey_answered
+          : !row.survey_answered);
       return matchesSearch && matchesSurvey;
     });
   }, [details, searchQuery, surveyFilter]);
 
-  const loadData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-    try {
-      const [statsResult, detailsResult] = await Promise.all([
-        getSurveyDashboardStatsAction(slug),
-        getSurveyDashboardDetailsAction(slug),
-      ]);
-
-      if (statsResult.success && statsResult.data) {
-        setStats(statsResult.data as SurveyDashboardStats);
-      } else if (!statsResult.success) {
-        setError((statsResult as { error?: string }).error || "Failed to load stats");
+  const loadData = useCallback(
+    async (isRefresh = false) => {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
+      setError(null);
+      try {
+        const [statsResult, detailsResult] = await Promise.all([
+          getSurveyDashboardStatsAction(slug),
+          getSurveyDashboardDetailsAction(slug),
+        ]);
 
-      if (detailsResult.success && detailsResult.data) {
-        setDetails((detailsResult.data as SurveyResponderRow[]) || []);
+        if (statsResult.success && statsResult.data) {
+          setStats(statsResult.data as SurveyDashboardStats);
+        } else if (!statsResult.success) {
+          setError(
+            (statsResult as { error?: string }).error || "Failed to load stats",
+          );
+        }
+
+        if (detailsResult.success && detailsResult.data) {
+          setDetails((detailsResult.data as SurveyResponderRow[]) || []);
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load dashboard",
+        );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load dashboard");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [slug]);
+    },
+    [slug],
+  );
 
   useEffect(() => {
     loadData(false);
@@ -223,7 +255,7 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
       } else {
         downloadCSV(csvData, `survey-dashboard-${slug}.csv`);
         showSuccess(
-          `Exported ${filteredDetails.length} row${filteredDetails.length === 1 ? "" : "s"}`
+          `Exported ${filteredDetails.length} row${filteredDetails.length === 1 ? "" : "s"}`,
         );
       }
     } catch (err) {
@@ -251,7 +283,9 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
       <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6 flex items-start gap-4">
         <AlertCircle className="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-amber-200 mb-1">Failed to load dashboard</h3>
+          <h3 className="font-semibold text-amber-200 mb-1">
+            Failed to load dashboard
+          </h3>
           <p className="text-white/70 text-sm mb-4">{error}</p>
           <button
             onClick={() => loadData(false)}
@@ -293,9 +327,13 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
             <span className="p-1.5 rounded-lg bg-white/10 shrink-0">
               <Users className="w-4 h-4 text-white/70" />
             </span>
-            <p className="font-urbanist text-white/60 text-xs truncate">Registered</p>
+            <p className="font-urbanist text-white/60 text-xs truncate">
+              Registered
+            </p>
           </div>
-          <p className="font-urbanist text-xl md:text-3xl font-bold text-white">{stats?.totalRegistered ?? 0}</p>
+          <p className="font-urbanist text-xl md:text-3xl font-bold text-white">
+            {stats?.totalRegistered ?? 0}
+          </p>
           <p className="text-xs text-white/40 mt-1">Approved registrations</p>
         </div>
 
@@ -304,9 +342,13 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
             <span className="p-1.5 rounded-lg bg-blue-500/20 shrink-0">
               <UserCheck className="w-4 h-4 text-blue-400" />
             </span>
-            <p className="font-urbanist text-white/60 text-xs truncate">Attended</p>
+            <p className="font-urbanist text-white/60 text-xs truncate">
+              Attended
+            </p>
           </div>
-          <p className="font-urbanist text-xl md:text-3xl font-bold text-blue-400">{stats?.attended ?? 0}</p>
+          <p className="font-urbanist text-xl md:text-3xl font-bold text-blue-400">
+            {stats?.attended ?? 0}
+          </p>
           <p className="text-xs text-white/40 mt-1">Checked in at event</p>
         </div>
 
@@ -315,9 +357,13 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
             <span className="p-1.5 rounded-lg bg-emerald-500/20 shrink-0">
               <FileCheck className="w-4 h-4 text-emerald-400" />
             </span>
-            <p className="font-urbanist text-white/60 text-xs truncate">Answered survey</p>
+            <p className="font-urbanist text-white/60 text-xs truncate">
+              Answered survey
+            </p>
           </div>
-          <p className="font-urbanist text-xl md:text-3xl font-bold text-emerald-400">{stats?.surveyAnswered ?? 0}</p>
+          <p className="font-urbanist text-xl md:text-3xl font-bold text-emerald-400">
+            {stats?.surveyAnswered ?? 0}
+          </p>
           <p className="text-xs text-white/40 mt-1">Submitted the survey</p>
         </div>
 
@@ -326,10 +372,16 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
             <span className="p-1.5 rounded-lg bg-amber-500/20 shrink-0">
               <UserX className="w-4 h-4 text-amber-400" />
             </span>
-            <p className="font-urbanist text-white/60 text-xs truncate">No survey yet</p>
+            <p className="font-urbanist text-white/60 text-xs truncate">
+              No survey yet
+            </p>
           </div>
-          <p className="font-urbanist text-xl md:text-3xl font-bold text-amber-400">{stats?.registeredWithoutSurvey ?? 0}</p>
-          <p className="text-xs text-white/40 mt-1">Registered, not submitted</p>
+          <p className="font-urbanist text-xl md:text-3xl font-bold text-amber-400">
+            {stats?.registeredWithoutSurvey ?? 0}
+          </p>
+          <p className="text-xs text-white/40 mt-1">
+            Registered, not submitted
+          </p>
         </div>
 
         <div className="bg-white/5 backdrop-blur-md rounded-xl p-4 md:p-5 border border-white/10 min-h-[100px] flex flex-col">
@@ -337,9 +389,13 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
             <span className="p-1.5 rounded-lg bg-cyan-500/20 shrink-0">
               <Percent className="w-4 h-4 text-cyan-400" />
             </span>
-            <p className="font-urbanist text-white/60 text-xs truncate">Completion</p>
+            <p className="font-urbanist text-white/60 text-xs truncate">
+              Completion
+            </p>
           </div>
-          <p className="font-urbanist text-xl md:text-3xl font-bold text-cyan-400">{completionRate}%</p>
+          <p className="font-urbanist text-xl md:text-3xl font-bold text-cyan-400">
+            {completionRate}%
+          </p>
           <p className="text-xs text-white/40 mt-1">% answered survey</p>
         </div>
       </div>
@@ -349,7 +405,9 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
         <div className="p-4 md:p-5 border-b border-white/10 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h4 className="font-semibold text-white">Attendee Survey Status</h4>
+              <h4 className="font-semibold text-white">
+                Attendee Survey Status
+              </h4>
               <p className="text-sm text-white/50 mt-0.5">
                 Registered vs answered the survey
               </p>
@@ -364,7 +422,10 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
               ) : (
                 <Download size={16} />
               )}
-              Export CSV {searchQuery || surveyFilter !== "all" ? `(${filteredDetails.length})` : ""}
+              Export CSV{" "}
+              {searchQuery || surveyFilter !== "all"
+                ? `(${filteredDetails.length})`
+                : ""}
             </button>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -384,18 +445,32 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
             <select
               value={surveyFilter}
               onChange={(e) =>
-                setSurveyFilter(e.target.value as "all" | "answered" | "not_answered")
+                setSurveyFilter(
+                  e.target.value as "all" | "answered" | "not_answered",
+                )
               }
               className="font-urbanist px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 transition-colors sm:w-48"
-              style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "#fff" }}
+              style={{
+                backgroundColor: "rgba(255,255,255,0.05)",
+                color: "#fff",
+              }}
             >
-              <option value="all" style={{ backgroundColor: "#0a1520", color: "#fff" }}>
+              <option
+                value="all"
+                style={{ backgroundColor: "#0a1520", color: "#fff" }}
+              >
                 All
               </option>
-              <option value="answered" style={{ backgroundColor: "#0a1520", color: "#fff" }}>
+              <option
+                value="answered"
+                style={{ backgroundColor: "#0a1520", color: "#fff" }}
+              >
                 Answered
               </option>
-              <option value="not_answered" style={{ backgroundColor: "#0a1520", color: "#fff" }}>
+              <option
+                value="not_answered"
+                style={{ backgroundColor: "#0a1520", color: "#fff" }}
+              >
                 Not answered
               </option>
             </select>
@@ -403,15 +478,28 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
         </div>
         <div className="overflow-x-auto">
           {details.length === 0 ? (
-            <div className="p-8 text-center text-white/50">
-              No registered yet. Survey data will appear once people register.
+            <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                <FileCheck size={24} className="text-white/40" />
+              </div>
+              <p className="font-urbanist text-sm md:text-base text-white/70 mb-1">
+                No survey data yet
+              </p>
+              <p className="text-white/50 text-xs md:text-sm max-w-md px-4">
+                Survey responses will appear here once people register and complete the survey.
+              </p>
             </div>
           ) : filteredDetails.length === 0 ? (
-            <div className="p-8 text-center text-white/50">
-              No results match the current filter.
+            <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
+              <p className="font-urbanist text-sm text-white/70 mb-1">
+                No results match the current filter
+              </p>
+              <p className="text-white/50 text-xs">
+                Try adjusting your search or filter
+              </p>
             </div>
           ) : (
-            <table className="w-full min-w-[500px]">
+            <table className="w-full min-w-[640px]">
               <thead>
                 <tr className="border-b border-white/10">
                   <th className="text-left py-3 px-4 text-xs font-medium text-white/60 uppercase tracking-wider whitespace-nowrap">
@@ -438,9 +526,13 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
                     className="border-b border-white/5 hover:bg-white/5 transition-colors"
                   >
                     <td className="py-3 px-4 text-white">
-                      {[row.first_name, row.last_name].filter(Boolean).join(" ") || "—"}
+                      {[row.first_name, row.last_name]
+                        .filter(Boolean)
+                        .join(" ") || "—"}
                     </td>
-                    <td className="py-3 px-4 text-white/80">{row.email || "—"}</td>
+                    <td className="py-3 px-4 text-white/80">
+                      {row.email || "—"}
+                    </td>
                     <td className="py-3 px-4">
                       <span
                         className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -481,7 +573,11 @@ export default function SurveyDashboard({ slug, surveyConfig }: SurveyDashboardP
       <FeedbackModal
         isOpen={!!feedbackRow}
         onClose={() => setFeedbackRow(null)}
-        attendeeName={[feedbackRow?.first_name, feedbackRow?.last_name].filter(Boolean).join(" ") || "Attendee"}
+        attendeeName={
+          [feedbackRow?.first_name, feedbackRow?.last_name]
+            .filter(Boolean)
+            .join(" ") || "Attendee"
+        }
         attendeeEmail={feedbackRow?.email ?? ""}
         answers={feedbackRow?.answers ?? null}
         surveyConfig={surveyConfig}
