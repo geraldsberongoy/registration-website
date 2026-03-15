@@ -46,7 +46,10 @@ export async function registerForEvent({
 
   const is_registered = !eventData.require_approval;
 
-  const existingRegistrant = await getRegistrantByUserAndEvent(authUser.id, eventData.event_id);
+  const existingRegistrant = await getRegistrantByUserAndEvent(
+    authUser.id,
+    eventData.event_id,
+  );
   if (existingRegistrant) {
     throw new Error("You have already registered for this event");
   }
@@ -57,13 +60,12 @@ export async function registerForEvent({
     terms_approval: terms_approval || true,
     form_answers,
     is_registered,
-    is_going: is_registered,
+    is_going: is_registered ? true : null,
   });
 
   if (is_registered) {
-    const { updateRegistrantQrData } = await import(
-      "@/repositories/registrantRepository"
-    );
+    const { updateRegistrantQrData } =
+      await import("@/repositories/registrantRepository");
     const token = createRegistrantQrToken({
       registrantId: data.registrant_id,
       eventId: data.event_id,
@@ -109,10 +111,11 @@ export async function registerForEvent({
   return {
     success: true,
     registrant: data,
-    message: is_registered ? "Registration successful" : "Registration pending approval",
+    message: is_registered
+      ? "Registration successful"
+      : "Registration pending approval",
   };
 }
-
 
 export async function updateGuestStatus(
   guestId: string,
@@ -164,7 +167,9 @@ export async function updateGuestStatus(
     try {
       const eventName = registrant.event?.event_name?.trim() || "our event";
       await sendRegisteredConfirmationEmail(registrant.users.email, eventName);
-      logger.info(`Registered confirmation email sent to ${registrant.users.email}`);
+      logger.info(
+        `Registered confirmation email sent to ${registrant.users.email}`,
+      );
     } catch (error) {
       logger.error("Failed to send registered confirmation email", {
         guestId,
@@ -183,11 +188,13 @@ export async function deleteGuest(guestId: string) {
 }
 
 export async function setIsGoing(guestId: string, isGoing: boolean) {
-  const { updateGuestIsGoing } = await import("@/repositories/registrantRepository");
+  const { updateGuestIsGoing } =
+    await import("@/repositories/registrantRepository");
   return await updateGuestIsGoing(guestId, isGoing);
 }
 
 export async function getEventRegistrants(eventId: string) {
-  const { getRegistrantsByEvent } = await import("@/repositories/registrantRepository");
+  const { getRegistrantsByEvent } =
+    await import("@/repositories/registrantRepository");
   return await getRegistrantsByEvent(eventId);
 }

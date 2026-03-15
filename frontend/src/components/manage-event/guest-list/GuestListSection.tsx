@@ -13,6 +13,7 @@ import { GuestListSearchFilter } from "./GuestListSearchFilter";
 import { GuestTableHeader } from "./GuestTableHeader";
 import { GuestTableRow } from "./GuestTableRow";
 import { GuestListEmpty } from "./GuestListEmpty";
+import { BulkActionConfirmModal } from "./BulkActionConfirmModal";
 
 interface GuestListSectionProps {
   guests: Guest[];
@@ -39,6 +40,10 @@ export function GuestListSection({
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
   const [showAnswersModal, setShowAnswersModal] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState<
+    "registered" | "pending" | "not-going"
+  >("registered");
+  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
   const {
     searchQuery,
@@ -63,13 +68,12 @@ export function GuestListSection({
     handleDeleteGuest,
     handleStatusChange,
     handleExport,
-    handleBulkApprove,
+    handleBulkStatusChange,
   } = useGuestActions(slug, onRefresh);
 
   const selectedGuests = guests.filter((g) =>
     selectedGuestIds.has(g.registrant_id),
   );
-  const selectedPendingGuests = selectedGuests.filter((g) => !g.is_registered);
 
   const allSelected =
     filteredGuests.length > 0 &&
@@ -79,6 +83,18 @@ export function GuestListSection({
 
   return (
     <>
+      <BulkActionConfirmModal
+        isOpen={showBulkConfirm}
+        count={selectedGuests.length}
+        status={bulkStatus}
+        isLoading={isPending}
+        onConfirm={() => {
+          setShowBulkConfirm(false);
+          handleBulkStatusChange(selectedGuests, bulkStatus);
+          clearSelection();
+        }}
+        onClose={() => setShowBulkConfirm(false)}
+      />
       <QRScannerModal
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
@@ -123,29 +139,46 @@ export function GuestListSection({
               <span className="font-urbanist text-sm text-white/70">
                 {selectedGuestIds.size} selected
               </span>
-              {selectedPendingGuests.length > 0 && (
-                <button
-                  onClick={() => handleBulkApprove(selectedGuests)}
-                  disabled={isPending}
-                  className="font-urbanist px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
+              <select
+                value={bulkStatus}
+                onChange={(e) =>
+                  setBulkStatus(
+                    e.target.value as "registered" | "pending" | "not-going",
+                  )
+                }
+                disabled={isPending}
+                className="font-urbanist px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 disabled:opacity-50 cursor-pointer"
+              >
+                <option
+                  value="registered"
+                  className="bg-[#0a1520] text-green-400"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Approve {selectedPendingGuests.length} Registration
-                  {selectedPendingGuests.length > 1 ? "s" : ""}
-                </button>
-              )}
+                  Set as Registered
+                </option>
+                <option
+                  value="pending"
+                  className="bg-[#0a1520] text-yellow-400"
+                >
+                  Set as Pending
+                </option>
+                <option value="not-going" className="bg-[#0a1520] text-red-400">
+                  Set as Not Going
+                </option>
+              </select>
+              <button
+                onClick={() => setShowBulkConfirm(true)}
+                disabled={isPending}
+                className="font-urbanist px-4 py-1.5 bg-cyan-600/80 hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white text-sm font-medium transition-colors"
+              >
+                Apply
+              </button>
+              <button
+                onClick={clearSelection}
+                disabled={isPending}
+                className="font-urbanist px-3 py-1.5 text-white/40 hover:text-white/70 text-sm transition-colors disabled:opacity-50"
+              >
+                Clear
+              </button>
             </div>
           )}
           {filteredGuests.length === 0 ? (

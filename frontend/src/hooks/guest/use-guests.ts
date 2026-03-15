@@ -127,7 +127,7 @@ export function useGuests(slug: string): UseGuestsReturn {
             return {
               ...guest,
               is_registered: true,
-              is_going: patch?.is_going ?? guest.is_going,
+              is_going: patch?.is_going ?? null,
               qr_data:
                 patch?.qr_data !== undefined ? patch.qr_data : guest.qr_data,
             };

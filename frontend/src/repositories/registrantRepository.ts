@@ -42,7 +42,7 @@ export async function createRegistrant(registrantData: {
   terms_approval: boolean;
   form_answers: Record<string, string>;
   is_registered: boolean;
-  is_going: boolean;
+  is_going: boolean | null;
 }) {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -67,6 +67,7 @@ export async function updateGuestStatus(
   const payload = isRegistered
     ? {
         is_registered: true,
+        is_going: null,
         qr_data: qrData,
       }
     : {

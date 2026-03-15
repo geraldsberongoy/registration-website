@@ -108,33 +108,43 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
     }
   }, [slug, showSuccess, showError]);
 
-  const handleBulkApprove = useCallback(
-    async (guests: Guest[]) => {
-      const pendingGuests = guests.filter((g) => !g.is_registered);
-      if (pendingGuests.length === 0) {
-        showError("No pending guests selected");
-        return;
-      }
+  const handleBulkStatusChange = useCallback(
+    async (
+      guests: Guest[],
+      newStatus: "registered" | "pending" | "not-going",
+    ) => {
+      if (guests.length === 0) return;
 
       startTransition(async () => {
         const results = await Promise.all(
-          pendingGuests.map((g) =>
-            updateGuestStatusAction(
-              { guestId: g.registrant_id, isRegistered: true },
+          guests.map((g) => {
+            if (newStatus === "not-going") {
+              return updateGuestIsGoingAction(
+                { guestId: g.registrant_id, isGoing: false },
+                slug,
+              );
+            }
+            return updateGuestStatusAction(
+              {
+                guestId: g.registrant_id,
+                isRegistered: newStatus === "registered",
+              },
               slug,
-            ),
-          ),
+            );
+          }),
         );
 
         const failed = results.filter((r) => !r.success).length;
         if (failed === 0) {
           onRefresh();
           showSuccess(
-            `${pendingGuests.length} guest${pendingGuests.length > 1 ? "s" : ""} approved successfully`,
+            `${guests.length} guest${
+              guests.length > 1 ? "s" : ""
+            } updated successfully`,
           );
         } else {
           onRefresh();
-          showError(`${failed} approval${failed > 1 ? "s" : ""} failed`);
+          showError(`${failed} update${failed > 1 ? "s" : ""} failed`);
         }
       });
     },
@@ -146,6 +156,6 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
     handleDeleteGuest,
     handleStatusChange,
     handleExport,
-    handleBulkApprove,
+    handleBulkStatusChange,
   };
 }
