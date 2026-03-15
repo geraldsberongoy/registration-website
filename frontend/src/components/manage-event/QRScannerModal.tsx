@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   CheckCircle,
@@ -352,10 +353,10 @@ export function QRScannerModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80">
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
       {/* Toast stack - bottom-right, outside modal */}
-      <div className="fixed bottom-6 right-6 z-[120] flex flex-col-reverse gap-2 pointer-events-none">
+      <div className="fixed bottom-6 right-6 z-[220] flex flex-col-reverse gap-2 pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
@@ -672,7 +673,7 @@ export function QRScannerModal({
           </div>
 
           {previewQrCodeUrl && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80">
+            <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/80">
               <div className="relative w-full max-w-sm bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-white/10 overflow-hidden">
                 <div className="flex items-center justify-between p-5 border-b border-white/10">
                   <h3 className="text-white font-urbanist font-bold">
@@ -704,6 +705,7 @@ export function QRScannerModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
