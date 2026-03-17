@@ -5,6 +5,7 @@ import { useState } from "react";
 import { logoutAction } from "@/actions/authActions";
 import { useUserStore } from "@/store/useUserStore";
 import { LogoutModal } from "./logout-modal";
+import { getLastViewedEventSlug } from "@/utils/last-viewed-event";
 
 interface AdminNavbarProps {
   activeTab: string;
@@ -46,7 +47,8 @@ export function AdminNavbar({ activeTab }: AdminNavbarProps) {
     try {
       await logoutAction();
       useUserStore.getState().clearUser();
-      router.push("/");
+      const lastSlug = getLastViewedEventSlug();
+      router.push(lastSlug ? `/event/${lastSlug}` : "/");
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -126,7 +128,7 @@ export function AdminNavbar({ activeTab }: AdminNavbarProps) {
           </button>
 
           {/* Logout Button - Muted */}
-          <button 
+          <button
             onClick={() => setIsLogoutModalOpen(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-white/10 hover:border-white/20 text-gray-400 hover:text-gray-300 hover:bg-white/5 transition-all duration-200 font-urbanist"
           >
@@ -183,7 +185,7 @@ export function AdminNavbar({ activeTab }: AdminNavbarProps) {
         </>
       )}
 
-      <LogoutModal 
+      <LogoutModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={handleLogout}

@@ -8,7 +8,23 @@ export async function getRegistrantByUserAndEvent(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("registrants")
-    .select("registrant_id")
+    .select(
+      `
+      registrant_id,
+      event_id,
+      users_id,
+      terms_approval,
+      form_answers,
+      is_registered,
+      is_going,
+      qr_data,
+      users!users_id (
+        first_name,
+        last_name,
+        email
+      )
+    `,
+    )
     .eq("users_id", userId)
     .eq("event_id", eventId)
     .maybeSingle();
@@ -48,12 +64,22 @@ export async function updateGuestStatus(
   qrData: string | null,
 ) {
   const supabase = await createClient();
+  const payload = isRegistered
+    ? {
+        is_registered: true,
+        qr_data: qrData,
+      }
+    : {
+        is_registered: false,
+        is_going: null,
+        check_in: false,
+        check_in_time: null,
+        qr_data: null,
+      };
+
   const { data, error } = await supabase
     .from("registrants")
-    .update({
-      is_registered: isRegistered,
-      qr_data: qrData,
-    })
+    .update(payload)
     .eq("registrant_id", guestId)
     .select();
 
@@ -139,6 +165,8 @@ export async function getRegistrantsByEvent(eventId: string): Promise<Guest[]> {
       form_answers,
       is_registered,
       is_going,
+      check_in,
+      check_in_time,
       qr_data,
       check_in,
       users!users_id (
@@ -314,14 +342,37 @@ export async function getRegistrantByQrData(
   return (data as Guest | null) ?? null;
 }
 
-export async function checkInRegistrant(registrantId: string) {
+export async function checkInRegistrant(
+  registrantId: string,
+  checkInTime?: string,
+) {
+  const checkedInAt = checkInTime ?? new Date().toISOString();
   const supabase = await createClient();
   const { error } = await supabase
     .from("registrants")
-    .update({ check_in: true, check_in_time: new Date().toISOString() })
+    .update({
+      check_in: true,
+      check_in_time: checkedInAt,
+      is_going: true,
+    })
     .eq("registrant_id", registrantId);
 
   if (error) {
     throw new Error(`Failed to check in registrant: ${error.message}`);
+  }
+}
+
+export async function undoCheckInRegistrant(registrantId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("registrants")
+    .update({
+      check_in: false,
+      check_in_time: null,
+    })
+    .eq("registrant_id", registrantId);
+
+  if (error) {
+    throw new Error(`Failed to undo check-in: ${error.message}`);
   }
 }

@@ -24,8 +24,7 @@ export default function UserRegisterForm({ nextUrl }: UserRegisterFormProps) {
 
   const passwordsMismatch =
     password.length > 0 &&
-    confirmPassword.length > 0 &&
-    password !== confirmPassword;
+    (confirmPassword.length === 0 || password !== confirmPassword);
 
   const canGoNext =
     firstName.trim().length > 0 &&
@@ -320,7 +319,12 @@ export default function UserRegisterForm({ nextUrl }: UserRegisterFormProps) {
 
               <button
                 type="submit"
-                disabled={isPending || passwordsMismatch || !password}
+                disabled={
+                  isPending ||
+                  passwordsMismatch ||
+                  !password ||
+                  !confirmPassword
+                }
                 className="
                   w-full
                   bg-[rgba(35,60,60,0.6)]

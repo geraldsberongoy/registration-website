@@ -19,6 +19,7 @@
     "crypto-js": "^4.2.0",
     "dompurify": "^3.3.1",
     "driver.js": "^1.4.0",
+    "fuse.js": "^7.1.0",
     "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",

@@ -16,6 +16,7 @@ import Squares from "@/components/create-event/squares-background";
 import { logoutAction } from "@/actions/authActions";
 import { getMyEventsAction } from "@/actions/registrantActions";
 import { useUserStore } from "@/store/useUserStore";
+import { getLastViewedEventSlug } from "@/utils/last-viewed-event";
 
 type MyEvent = {
   registrant_id: string;
@@ -95,7 +96,8 @@ export default function MyEventsPage() {
     try {
       await logoutAction();
       useUserStore.getState().clearUser();
-      router.replace("/");
+      const lastSlug = getLastViewedEventSlug();
+      router.replace(lastSlug ? `/event/${lastSlug}` : "/");
     } finally {
       setLoggingOut(false);
     }

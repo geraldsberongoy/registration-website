@@ -20,7 +20,10 @@ import { LocationMapPreview } from "@/components/event/location-map-preview";
 import { useEvent } from "@/hooks/event/use-event";
 import { getCurrentUserEmail } from "@/app/event/actions";
 
-import { setLastViewedEventSlug } from "@/utils/last-viewed-event";
+import {
+  setLastViewedEventSlug,
+  getLastViewedEventSlug,
+} from "@/utils/last-viewed-event";
 import { logoutAction } from "@/actions/authActions";
 import { getUserInfoAction } from "@/actions/userActions";
 import {
@@ -30,6 +33,21 @@ import {
 import { useUserStore } from "@/store/useUserStore";
 import { Guest } from "@/types/guest";
 import { useNotification } from "@/hooks/use-notification";
+
+function RegistrationCardSkeleton() {
+  return (
+    <div className="bg-black/40 backdrop-blur-md rounded-xl p-5 md:p-6 border border-white/10 mb-6 animate-pulse">
+      <div className="h-5 w-32 rounded bg-white/10 mb-4" />
+      <div className="h-4 w-72 max-w-full rounded bg-white/10 mb-6" />
+      <div className="h-11 w-full rounded-lg bg-white/10 mb-4" />
+      <div className="h-11 w-full rounded-lg bg-white/10 mb-4" />
+      <div className="pt-4 border-t border-white/10">
+        <div className="h-4 w-24 rounded bg-white/10 mb-2" />
+        <div className="h-4 w-20 rounded bg-white/10" />
+      </div>
+    </div>
+  );
+}
 
 export default function EventPage() {
   const params = useParams();
@@ -45,10 +63,11 @@ export default function EventPage() {
   const [registrationStatus, setRegistrationStatus] = useState<{
     isRegistered: boolean;
     registrationStatus: "approved" | "pending" | null;
-    isGoing?: boolean;
+    isGoing?: boolean | null;
     qrData?: string | null;
     guest?: Guest | null;
   } | null>(null);
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(true);
 
   const isLoggedIn = !roleLoading && userId != null;
 
@@ -57,7 +76,8 @@ export default function EventPage() {
     try {
       await logoutAction();
       useUserStore.getState().clearUser();
-      router.replace("/");
+      const lastSlug = getLastViewedEventSlug();
+      router.replace(lastSlug ? `/event/${lastSlug}` : "/");
     } finally {
       setLoggingOut(false);
     }
@@ -127,7 +147,20 @@ export default function EventPage() {
 
   useEffect(() => {
     async function checkRegistration() {
-      if (!userId || !slug) return;
+      if (roleLoading) return;
+
+      if (!slug) {
+        setIsCheckingRegistration(false);
+        return;
+      }
+
+      if (!userId) {
+        setRegistrationStatus(null);
+        setIsCheckingRegistration(false);
+        return;
+      }
+
+      setIsCheckingRegistration(true);
 
       try {
         const result = await checkUserRegistrationAction(slug);
@@ -148,11 +181,13 @@ export default function EventPage() {
         }
       } catch (err) {
         console.error("Failed to check registration status:", err);
+      } finally {
+        setIsCheckingRegistration(false);
       }
     }
 
     checkRegistration();
-  }, [userId, slug]);
+  }, [roleLoading, userId, slug]);
 
   useEffect(() => {
     const refreshParam = searchParams.get("refresh");
@@ -263,7 +298,8 @@ export default function EventPage() {
             <LocationMapPreview location={event.location} className="mb-6" />
 
             {/* Pending Approval Alert */}
-            {registrationStatus?.isRegistered &&
+            {!isCheckingRegistration &&
+              registrationStatus?.isRegistered &&
               registrationStatus?.registrationStatus === "pending" &&
               event.requireApproval && (
                 <div className="mb-6 bg-yellow-500/10 backdrop-blur-md rounded-xl p-4 border border-yellow-500/30">
@@ -285,59 +321,63 @@ export default function EventPage() {
               )}
 
             {/* Registration Card */}
-            <EventRegistrationCard
-              requireApproval={event.requireApproval}
-              ticketPrice={event.ticketPrice}
-              capacity={event.capacity}
-              registeredCount={event.registeredCount}
-              isUserRegistered={registrationStatus?.isRegistered || false}
-              registrationApprovalStatus={
-                registrationStatus?.registrationStatus || null
-              }
-              isGoing={registrationStatus?.isGoing ?? true}
-              qrData={registrationStatus?.qrData ?? null}
-              eventTitle={event.title}
-              eventDate={
-                event.startDate
-                  ? new Date(event.startDate).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
-                  : ""
-              }
-              eventTime={event.startTime || ""}
-              eventEndTime={event.endTime || ""}
-              eventLocation={event.location || ""}
-              attendeeName={
-                registrationStatus?.guest?.users
-                  ? `${registrationStatus.guest.users.first_name} ${registrationStatus.guest.users.last_name}`
-                  : "Guest"
-              }
-              forgotPasswordHref={`/forgot-password?next=${encodeURIComponent(`/event/${slug}/register`)}`}
-              onRsvpClick={() => router.push(`/event/${slug}/register`)}
-              onNotGoingClick={async () => {
-                const result = await setIsGoingAction(slug, false);
-                if (result.success) {
-                  setRegistrationStatus((prev) =>
-                    prev ? { ...prev, isGoing: false } : prev,
-                  );
-                } else {
-                  showError(result.error || "Failed to update status");
+            {isCheckingRegistration ? (
+              <RegistrationCardSkeleton />
+            ) : (
+              <EventRegistrationCard
+                requireApproval={event.requireApproval}
+                ticketPrice={event.ticketPrice}
+                capacity={event.capacity}
+                registeredCount={event.registeredCount}
+                isUserRegistered={registrationStatus?.isRegistered || false}
+                registrationApprovalStatus={
+                  registrationStatus?.registrationStatus || null
                 }
-              }}
-              onGoingClick={async () => {
-                const result = await setIsGoingAction(slug, true);
-                if (result.success) {
-                  setRegistrationStatus((prev) =>
-                    prev ? { ...prev, isGoing: true } : prev,
-                  );
-                } else {
-                  showError(result.error || "Failed to update status");
+                isGoing={registrationStatus?.isGoing ?? null}
+                qrData={registrationStatus?.qrData ?? null}
+                eventTitle={event.title}
+                eventDate={
+                  event.startDate
+                    ? new Date(event.startDate).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : ""
                 }
-              }}
-            />
+                eventTime={event.startTime || ""}
+                eventEndTime={event.endTime || ""}
+                eventLocation={event.location || ""}
+                attendeeName={
+                  registrationStatus?.guest?.users
+                    ? `${registrationStatus.guest.users.first_name} ${registrationStatus.guest.users.last_name}`
+                    : "Guest"
+                }
+                forgotPasswordHref={`/forgot-password?next=${encodeURIComponent(`/event/${slug}/register`)}`}
+                onRsvpClick={() => router.push(`/event/${slug}/register`)}
+                onNotGoingClick={async () => {
+                  const result = await setIsGoingAction(slug, false);
+                  if (result.success) {
+                    setRegistrationStatus((prev) =>
+                      prev ? { ...prev, isGoing: false } : prev,
+                    );
+                  } else {
+                    showError(result.error || "Failed to update status");
+                  }
+                }}
+                onGoingClick={async () => {
+                  const result = await setIsGoingAction(slug, true);
+                  if (result.success) {
+                    setRegistrationStatus((prev) =>
+                      prev ? { ...prev, isGoing: true } : prev,
+                    );
+                  } else {
+                    showError(result.error || "Failed to update status");
+                  }
+                }}
+              />
+            )}
 
             {/* About - Below RSVP */}
             <EventAbout

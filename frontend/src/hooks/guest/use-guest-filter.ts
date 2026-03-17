@@ -1,20 +1,26 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Fuse from "fuse.js";
 import { Guest } from "@/types/guest";
 
 export function useGuestFilter(guests: Guest[]) {
+  const SEARCH_DEBOUNCE_MS = 350;
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredGuests = useMemo(() => {
-    const lowerQuery = searchQuery.toLowerCase();
-    
-    return guests.filter((guest) => {
-      if (!guest.users) return false;
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, SEARCH_DEBOUNCE_MS);
 
-      const matchesSearch = !searchQuery || 
-        guest.users.first_name?.toLowerCase().includes(lowerQuery) ||
-        guest.users.last_name?.toLowerCase().includes(lowerQuery) ||
-        guest.users.email?.toLowerCase().includes(lowerQuery);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  const filteredGuests = useMemo(() => {
+    const statusFilteredGuests = guests.filter((guest) => {
+      if (!guest.users) return false;
 
       const matchesStatus = statusFilter === "all" || 
         (statusFilter === "registered" ? guest.is_registered && guest.is_going !== false
@@ -22,9 +28,43 @@ export function useGuestFilter(guests: Guest[]) {
           : statusFilter === "not-going" ? guest.is_registered && guest.is_going === false
           : true);
 
-      return matchesSearch && matchesStatus;
+      return matchesStatus;
     });
-  }, [guests, searchQuery, statusFilter]);
+
+    if (!debouncedSearchQuery.trim()) {
+      return statusFilteredGuests;
+    }
+
+    const searchableGuests = statusFilteredGuests.map((guest) => {
+      const firstName = guest.users?.first_name?.trim() ?? "";
+      const lastName = guest.users?.last_name?.trim() ?? "";
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      return {
+        guest,
+        firstName,
+        lastName,
+        fullName,
+        email: guest.users?.email ?? "",
+      };
+    });
+
+    const fuse = new Fuse(searchableGuests, {
+      threshold: 0.4,
+      ignoreLocation: true,
+      minMatchCharLength: 2,
+      keys: [
+        { name: "fullName", weight: 0.5 },
+        { name: "firstName", weight: 0.2 },
+        { name: "lastName", weight: 0.2 },
+        { name: "email", weight: 0.1 },
+      ],
+    });
+
+    return fuse
+      .search(debouncedSearchQuery)
+      .map((result) => result.item.guest);
+  }, [guests, debouncedSearchQuery, statusFilter]);
 
   return {
     searchQuery,

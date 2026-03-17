@@ -20,6 +20,7 @@ export async function generateQRCodeDataUrl(qrData: string): Promise<string> {
   const qrcode = await import("qrcode");
 
   return qrcode.toDataURL(qrData, {
+    errorCorrectionLevel: "L",
     width: 400,
     margin: 2,
     color: {
@@ -74,7 +75,9 @@ export function createRegistrantQrData(input: {
   return JSON.stringify(payload);
 }
 
-export function parseRegistrantQrData(value: string): RegistrantQrPayload | null {
+export function parseRegistrantQrData(
+  value: string,
+): RegistrantQrPayload | null {
   try {
     const parsed = JSON.parse(value) as Partial<RegistrantQrPayload>;
     if (!parsed || typeof parsed !== "object") return null;

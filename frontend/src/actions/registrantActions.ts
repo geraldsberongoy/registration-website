@@ -15,6 +15,7 @@ import {
 } from "@/services/registrantService";
 import { canManageEvent } from "@/services/authService";
 import { logger } from "@/utils/logger";
+import type { Guest } from "@/types/guest";
 import {
   withActionErrorHandler,
   UnauthorizedError,
@@ -43,7 +44,7 @@ export const updateGuestStatusAction = withActionErrorHandler(
       throw new UnauthorizedError("Unauthorized");
     }
 
-    await updateGuestStatus(
+    const updatedRows = await updateGuestStatus(
       validatedData.guestId,
       validatedData.isRegistered,
       slug,
@@ -51,6 +52,10 @@ export const updateGuestStatusAction = withActionErrorHandler(
     revalidatePath(`/admin/events/${slug}/manage`);
     revalidatePath(`/event/${slug}`);
     logger.info(`Successfully updated guest ${validatedData.guestId} status`);
+
+    return {
+      guest: Array.isArray(updatedRows) ? (updatedRows[0] ?? null) : null,
+    };
   },
 );
 
@@ -140,7 +145,7 @@ export const exportGuestsAction = withActionErrorHandler(
 
 export const checkUserRegistrationAction = withActionErrorHandler(
   async (eventSlug: string) => {
-    const { getRegistrantByUserAndEvent, getRegistrantById } =
+    const { getRegistrantByUserAndEvent } =
       await import("@/repositories/registrantRepository");
     const { getEventIdAndApprovalBySlug } =
       await import("@/repositories/eventRepository");
@@ -175,16 +180,14 @@ export const checkUserRegistrationAction = withActionErrorHandler(
       };
     }
 
-    const guest = await getRegistrantById(registrant.registrant_id);
-
     return {
       isRegistered: true,
-      registrationStatus: (guest?.is_registered ? "approved" : "pending") as
-        | "approved"
-        | "pending",
-      isGoing: guest?.is_going ?? false,
-      qrData: (guest?.qr_data as string | null) ?? null,
-      guest,
+      registrationStatus: (registrant.is_registered
+        ? "approved"
+        : "pending") as "approved" | "pending",
+      isGoing: registrant.is_going ?? null,
+      qrData: (registrant.qr_data as string | null) ?? null,
+      guest: registrant as unknown as Guest,
     };
   },
 );

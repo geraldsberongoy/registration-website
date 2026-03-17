@@ -3,14 +3,15 @@
 import Link from "next/link";
 import {
   CheckCircle,
+  CheckCircle2,
   Users,
   Ticket,
   Download,
-  QrCode,
   Loader2,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { generateQRCodeDataUrl } from "@/services/qrService";
 
 // Helper function to convert 24-hour time to 12-hour AM/PM format
@@ -38,7 +39,7 @@ interface EventRegistrationCardProps {
   registeredCount?: number;
   isUserRegistered?: boolean;
   registrationApprovalStatus?: "approved" | "pending" | null;
-  isGoing?: boolean;
+  isGoing?: boolean | null;
   qrData?: string | null;
   forgotPasswordHref?: string;
   eventTitle?: string;
@@ -59,7 +60,7 @@ export function EventRegistrationCard({
   registeredCount = 0,
   isUserRegistered = false,
   registrationApprovalStatus = null,
-  isGoing = true,
+  isGoing = null,
   qrData = null,
   forgotPasswordHref = "/forgot-password",
   eventTitle = "Event",
@@ -73,9 +74,13 @@ export function EventRegistrationCard({
   onGoingClick,
 }: EventRegistrationCardProps) {
   const [downloadingTicket, setDownloadingTicket] = useState(false);
-  const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [generatingQRCode, setGeneratingQRCode] = useState(false);
+  const [qrGenerationError, setQrGenerationError] = useState<string | null>(
+    null,
+  );
+  const qrAttemptedForDataRef = useRef<string | null>(null);
+  const qrGenerationInFlightRef = useRef(false);
 
   const capacityNum = parseInt(capacity) || 0;
   const slotsAvailable = capacityNum - registeredCount;
@@ -84,7 +89,7 @@ export function EventRegistrationCard({
   const isFull = capacityNum > 0 && slotsAvailable <= 0;
   const isApproved = registrationApprovalStatus === "approved";
   const shouldShowTicket =
-    isUserRegistered && isApproved && isGoing && showQRCode && !!qrCodeUrl;
+    isUserRegistered && isApproved && isGoing === true && !!qrCodeUrl;
 
   const handleDownloadTicket = async () => {
     if (!qrCodeUrl) return;
@@ -103,29 +108,61 @@ export function EventRegistrationCard({
     }
   };
 
-  const handleToggleQRCode = async () => {
-    if (!qrData) return;
+  useEffect(() => {
+    setQrCodeUrl(null);
+    setQrGenerationError(null);
+    setGeneratingQRCode(false);
+    qrAttemptedForDataRef.current = null;
+    qrGenerationInFlightRef.current = false;
+  }, [qrData]);
 
-    if (showQRCode) {
-      setShowQRCode(false);
-      return;
-    }
+  useEffect(() => {
+    let isCancelled = false;
 
-    if (!qrCodeUrl) {
+    async function ensureQrCode() {
+      if (!isUserRegistered || !isApproved || isGoing !== true || !qrData) {
+        return;
+      }
+
+      if (qrCodeUrl || qrGenerationInFlightRef.current) {
+        return;
+      }
+
+      if (qrAttemptedForDataRef.current === qrData) {
+        return;
+      }
+
+      qrGenerationInFlightRef.current = true;
       setGeneratingQRCode(true);
+      qrAttemptedForDataRef.current = qrData;
+      setQrGenerationError(null);
       try {
         const nextQrCodeUrl = await generateQRCodeDataUrl(qrData);
-        setQrCodeUrl(nextQrCodeUrl);
+        if (!isCancelled) {
+          setQrCodeUrl(nextQrCodeUrl);
+          setQrGenerationError(null);
+        }
       } catch (error) {
         console.error("Failed to generate QR code:", error);
-        return;
+        if (!isCancelled) {
+          setQrGenerationError(
+            "We could not generate your QR code right now. Please try again later.",
+          );
+        }
       } finally {
-        setGeneratingQRCode(false);
+        qrGenerationInFlightRef.current = false;
+        if (!isCancelled) {
+          setGeneratingQRCode(false);
+        }
       }
     }
 
-    setShowQRCode(true);
-  };
+    void ensureQrCode();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isUserRegistered, isApproved, isGoing, qrData, qrCodeUrl]);
 
   return (
     <div className="bg-black/40 backdrop-blur-md rounded-xl p-5 md:p-6 border border-white/10 mb-6">
@@ -253,38 +290,50 @@ export function EventRegistrationCard({
         </div>
       )}
 
-      {isUserRegistered && isApproved && !isGoing && (
+      {isUserRegistered && isApproved && (
         <div className="mb-4 flex gap-3">
           <button
             onClick={onGoingClick}
-            className="flex-1 text-sm font-bold px-4 py-3 rounded-lg transition-all bg-accent/30 text-accent border border-accent/50 hover:bg-accent/40"
+            className={`flex-1 inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3 rounded-lg border transition-all ${
+              isGoing === true
+                ? "bg-emerald-500 text-white border-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                : "bg-emerald-500/10 text-emerald-200 border-emerald-500/40 hover:bg-emerald-500/20"
+            }`}
           >
+            <CheckCircle2 size={16} />
             GOING
           </button>
           <button
             onClick={onNotGoingClick}
-            className="flex-1 text-sm font-bold px-4 py-3 rounded-lg transition-all bg-red-600/30 text-white hover:bg-red-600/40"
+            className={`flex-1 inline-flex items-center justify-center gap-2 text-sm font-bold px-4 py-3 rounded-lg border transition-all ${
+              isGoing === false
+                ? "bg-rose-500 text-white border-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.4)]"
+                : "bg-rose-500/10 text-rose-200 border-rose-500/40 hover:bg-rose-500/20"
+            }`}
           >
+            <XCircle size={16} />
             NOT GOING
           </button>
         </div>
       )}
 
-      {isUserRegistered && isApproved && isGoing && qrData ? (
-        <Button
-          fullWidth
-          onClick={handleToggleQRCode}
-          disabled={generatingQRCode}
-          className="text-sm font-bold tracking-wide bg-green-600 hover:bg-green-700 shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transition-all transform hover:scale-[1.02] border-none text-white disabled:opacity-50"
-        >
-          {generatingQRCode ? (
-            <Loader2 size={16} className="mr-2 inline-block animate-spin" />
-          ) : (
-            <QrCode size={16} className="mr-2 inline-block" />
-          )}
-          {showQRCode ? "HIDE QR CODE" : "SHOW QR CODE"}
-        </Button>
-      ) : isUserRegistered && isApproved && isGoing && !qrData ? (
+      {isUserRegistered &&
+      isApproved &&
+      isGoing === true &&
+      generatingQRCode &&
+      !qrCodeUrl ? (
+        <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-200 inline-flex items-center gap-2">
+          <Loader2 size={16} className="animate-spin" />
+          Generating your QR code...
+        </div>
+      ) : isUserRegistered &&
+        isApproved &&
+        isGoing === true &&
+        qrGenerationError ? (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {qrGenerationError}
+        </div>
+      ) : isUserRegistered && isApproved && isGoing === true && !qrData ? (
         <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
           Ticket unavailable. Please contact the event organizer.
         </div>

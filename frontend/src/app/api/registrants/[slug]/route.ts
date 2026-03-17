@@ -5,7 +5,7 @@ import { Guest } from "@/types/guest";
 
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ slug: string }> }
+  context: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await context.params;
 
@@ -33,7 +33,8 @@ export async function GET(
 
     const { data: guests, error: guestsError } = await supabase
       .from("registrants")
-      .select(`
+      .select(
+        `
         registrant_id,
         event_id,
         users_id,
@@ -41,6 +42,8 @@ export async function GET(
         form_answers,
         is_registered,
         is_going,
+        check_in,
+        check_in_time,
         qr_data,
         check_in,
         users!users_id (
@@ -48,13 +51,14 @@ export async function GET(
           last_name,
           email
         )
-      `)
+      `,
+      )
       .eq("event_id", event.event_id);
 
     if (guestsError) {
       return NextResponse.json(
         { error: "Failed to fetch guests" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -63,7 +67,7 @@ export async function GET(
     console.error("Error fetching registrants:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

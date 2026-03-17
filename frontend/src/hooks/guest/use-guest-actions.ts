@@ -42,19 +42,44 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
       onGuestStatusUpdated?: (
         guestId: string,
         status: "registered" | "pending" | "not-going",
+        patch?: {
+          qr_data?: string | null;
+          is_going?: boolean | null;
+        },
       ) => void,
     ) => {
       startTransition(async () => {
         let result;
         if (newStatus === "not-going") {
-          result = await updateGuestIsGoingAction({ guestId, isGoing: false }, slug);
+          result = await updateGuestIsGoingAction(
+            { guestId, isGoing: false },
+            slug,
+          );
         } else {
           const isRegistered = newStatus === "registered";
-          result = await updateGuestStatusAction({ guestId, isRegistered }, slug);
+          result = await updateGuestStatusAction(
+            { guestId, isRegistered },
+            slug,
+          );
         }
 
         if (result.success) {
-          onGuestStatusUpdated?.(guestId, newStatus);
+          const updatedGuest =
+            result.data &&
+            typeof result.data === "object" &&
+            "guest" in result.data &&
+            result.data.guest &&
+            typeof result.data.guest === "object"
+              ? (result.data.guest as {
+                  qr_data?: string | null;
+                  is_going?: boolean | null;
+                })
+              : undefined;
+
+          onGuestStatusUpdated?.(guestId, newStatus, {
+            qr_data: updatedGuest?.qr_data,
+            is_going: updatedGuest?.is_going,
+          });
           showSuccess("Status updated successfully");
         } else {
           showError(result.error || "Failed to update status");
@@ -94,7 +119,10 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
       startTransition(async () => {
         const results = await Promise.all(
           pendingGuests.map((g) =>
-            updateGuestStatusAction({ guestId: g.registrant_id, isRegistered: true }, slug),
+            updateGuestStatusAction(
+              { guestId: g.registrant_id, isRegistered: true },
+              slug,
+            ),
           ),
         );
 

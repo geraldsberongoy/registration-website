@@ -7,7 +7,7 @@ interface GuestTableHeaderProps {
   onSelectAll: (checked: boolean) => void;
   showSelectMenu: boolean;
   onToggleSelectMenu: () => void;
-  onSelectByStatus: (status: 'all' | 'registered' | 'pending') => void;
+  onSelectByStatus: (status: "all" | "registered" | "pending") => void;
   onDeselectAll: () => void;
 }
 
@@ -43,12 +43,12 @@ export function GuestTableHeader({
             >
               <ChevronDown size={14} className="text-white/60" />
             </button>
-            
+
             {showSelectMenu && (
               <SelectionDropdown
-                onSelectAll={() => onSelectByStatus('all')}
-                onSelectRegistered={() => onSelectByStatus('registered')}
-                onSelectPending={() => onSelectByStatus('pending')}
+                onSelectAll={() => onSelectByStatus("all")}
+                onSelectRegistered={() => onSelectByStatus("registered")}
+                onSelectPending={() => onSelectByStatus("pending")}
                 onDeselectAll={onDeselectAll}
               />
             )}
@@ -69,7 +69,7 @@ export function GuestTableHeader({
         <th className="font-urbanist text-left text-xs md:text-sm font-medium text-white/60 pb-3 px-2 hidden md:table-cell">
           Going
         </th>
-        <th className="font-urbanist text-center text-xs md:text-sm font-medium text-white/60 pb-3 px-2 hidden lg:table-cell">
+        <th className="font-urbanist text-center text-xs md:text-sm font-medium text-white/60 pb-3 px-2 hidden md:table-cell">
           Ticket
         </th>
         <th className="font-urbanist text-right text-xs md:text-sm font-medium text-white/60 pb-3 px-2">

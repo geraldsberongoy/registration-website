@@ -52,11 +52,18 @@ export const registerAction = withActionErrorHandler(
     const lastName = (formData.get("lastName") as string)?.trim() ?? "";
     const email = (formData.get("email") as string)?.trim() ?? "";
     const password = (formData.get("password") as string) ?? "";
+    const confirmPassword = (formData.get("confirmPassword") as string) ?? "";
 
     const { registerUser } = await import("@/services/authService");
     const { RegisterSchema } = await import("@/validators/authValidators");
 
-    RegisterSchema.parse({ firstName, lastName, email, password });
+    RegisterSchema.parse({
+      firstName,
+      lastName,
+      email,
+      password,
+      confirmPassword,
+    });
     const data = await registerUser(firstName, lastName, email, password);
 
     if (data?.user) {
@@ -117,7 +124,8 @@ export const forgotPasswordAction = withActionErrorHandler(
   async (prevState: AuthResult | null, formData: FormData) => {
     const email = (formData.get("email") as string)?.trim() ?? "";
 
-    const { ForgotPasswordSchema } = await import("@/validators/authValidators");
+    const { ForgotPasswordSchema } =
+      await import("@/validators/authValidators");
     const { requestPasswordReset } = await import("@/services/authService");
 
     ForgotPasswordSchema.parse({ email });
