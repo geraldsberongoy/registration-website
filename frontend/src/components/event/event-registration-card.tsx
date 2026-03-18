@@ -182,7 +182,7 @@ export function EventRegistrationCard({
           : "Welcome! To join the event, please register below."}
       </p>
 
-      {requireApproval && !isUserRegistered && (
+      {registrationOpen && requireApproval && !isUserRegistered && (
         <div className="flex items-start gap-2 p-3 rounded-lg bg-secondary/10 border border-secondary/20 mb-4">
           <CheckCircle
             size={16}
