@@ -44,6 +44,7 @@ export const UpdateEventDetailsSchema = z.object({
 export const UpdateEventSettingsSchema = z.object({
   slug: z.string().min(1, "Slug is required"),
   requireApproval: z.boolean(),
+  registrationOpen: z.boolean(),
 });
 
 export const RegistrationQuestionSchema = z.object({

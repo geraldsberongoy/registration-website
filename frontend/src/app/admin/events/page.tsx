@@ -47,7 +47,7 @@ export default function EventsPage() {
       date: event.start_date ?? "",
       registered: event.registered ?? 0,
       capacity: event.capacity ?? 0,
-      status: event.status ?? "upcoming",
+      status: event.status ?? "active",
       coverImage: event.cover_image ?? undefined,
     }));
 

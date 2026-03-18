@@ -37,6 +37,8 @@ export type QuestionFieldValue = string | boolean | QuestionType | string[];
 export interface EventData {
   slug: string;
   title: string;
+  status?: string;
+  registrationOpen?: boolean;
   // ID of the Supabase auth user who created the event
   organizerId?: string | null;
   startDate: string;
@@ -87,6 +89,7 @@ export interface EventInsertData {
   require_approval: boolean;
   form_questions: Question[] | null;
   status: string;
+  registration_open?: boolean;
   cover_image?: string | null;
   certificate_config?: CertificateConfig | null;
 }

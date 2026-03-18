@@ -33,6 +33,7 @@ function format12HourTime(time: string): string {
 }
 
 interface EventRegistrationCardProps {
+  registrationOpen?: boolean;
   requireApproval: boolean;
   ticketPrice: string;
   capacity: string;
@@ -54,6 +55,7 @@ interface EventRegistrationCardProps {
 }
 
 export function EventRegistrationCard({
+  registrationOpen = true,
   requireApproval,
   ticketPrice,
   capacity,
@@ -171,7 +173,9 @@ export function EventRegistrationCard({
       </h3>
 
       <p className="text-white/70 text-sm mb-5 leading-relaxed">
-        {isUserRegistered
+        {!registrationOpen && !isUserRegistered
+          ? "Registration for this event is closed."
+          : isUserRegistered
           ? registrationApprovalStatus === "approved"
             ? "You're registered for this event."
             : "Your registration is pending approval."
@@ -341,7 +345,7 @@ export function EventRegistrationCard({
         <Button
           fullWidth
           onClick={isUserRegistered ? undefined : onRsvpClick}
-          disabled={isFull || isUserRegistered}
+          disabled={isFull || isUserRegistered || !registrationOpen}
           className={`text-sm font-bold tracking-wide ${
             isUserRegistered
               ? isApproved
@@ -350,7 +354,9 @@ export function EventRegistrationCard({
               : "shadow-[0_0_30px_rgba(0,128,128,0.4)] hover:shadow-[0_0_40px_rgba(0,128,128,0.6)]"
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          {isFull
+          {!registrationOpen
+            ? "REGISTRATION CLOSED"
+            : isFull
             ? "EVENT FULL"
             : isUserRegistered
               ? isApproved

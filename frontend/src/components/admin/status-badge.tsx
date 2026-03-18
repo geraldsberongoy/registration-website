@@ -10,6 +10,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     confirmed: 'bg-green-500/10 text-green-500 border-green-500/20',
     pending: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
     cancelled: 'bg-red-500/10 text-red-500 border-red-500/20',
+    completed: 'bg-red-500/10 text-red-500 border-red-500/20',
     active: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   };
   
@@ -17,6 +18,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     confirmed: CheckCircle,
     pending: AlertCircle,
     cancelled: XCircle,
+    completed: XCircle,
     active: Activity,
   };
   

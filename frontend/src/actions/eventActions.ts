@@ -110,6 +110,7 @@ export async function updateEventSettingsAction(data: unknown) {
     await updateEventSettings(
       validatedData.slug,
       validatedData.requireApproval,
+      validatedData.registrationOpen,
     );
 
     // Revalidate Next.js cache

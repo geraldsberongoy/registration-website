@@ -33,6 +33,7 @@ import {
 import { useUserStore } from "@/store/useUserStore";
 import { Guest } from "@/types/guest";
 import { useNotification } from "@/hooks/use-notification";
+import { isRegistrationOpen } from "@/utils/registration-open";
 
 function RegistrationCardSkeleton() {
   return (
@@ -325,6 +326,10 @@ export default function EventPage() {
               <RegistrationCardSkeleton />
             ) : (
               <EventRegistrationCard
+                registrationOpen={isRegistrationOpen({
+                  registrationOpen: event.registrationOpen,
+                  status: event.status,
+                })}
                 requireApproval={event.requireApproval}
                 ticketPrice={event.ticketPrice}
                 capacity={event.capacity}

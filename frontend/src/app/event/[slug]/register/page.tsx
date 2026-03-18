@@ -7,6 +7,7 @@ import { RegistrationFlow } from "@/components/registration/RegistrationFlow";
 import { useEvent } from "@/hooks/event/use-event";
 import BokehBackground from "@/components/create-event/bokeh-background";
 import Squares from "@/components/create-event/squares-background";
+import { isRegistrationOpen } from "@/utils/registration-open";
 
 export default function EventRegisterPage() {
   const params = useParams();
@@ -32,6 +33,21 @@ export default function EventRegisterPage() {
         title="Event not found"
         message="The event you're looking for doesn't exist or has been removed."
         onAction={() => router.push("/")}
+      />
+    );
+  }
+
+  const registrationOpen = isRegistrationOpen({
+    registrationOpen: event.registrationOpen,
+    status: event.status,
+  });
+
+  if (!registrationOpen) {
+    return (
+      <ErrorState
+        title="Registration closed"
+        message="Registration for this event is no longer accepting new attendees."
+        onAction={() => router.push(`/event/${slug}`)}
       />
     );
   }

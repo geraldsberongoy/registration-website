@@ -14,6 +14,7 @@ import {
   parseRegistrantQrData,
 } from "@/services/qrService";
 import { logger } from "@/utils/logger";
+import { isRegistrationOpenFromDb } from "@/utils/registration-open";
 
 export async function registerForEvent({
   event_id,
@@ -42,6 +43,15 @@ export async function registerForEvent({
   const eventData = await getEventIdAndApprovalBySlug(event_id);
   if (!eventData) {
     throw new Error("Event not found");
+  }
+
+  const registrationOpen = isRegistrationOpenFromDb({
+    registration_open: eventData.registration_open,
+    status: eventData.status,
+  });
+
+  if (!registrationOpen) {
+    throw new Error("Registration for this event is closed");
   }
 
   const is_registered = !eventData.require_approval;

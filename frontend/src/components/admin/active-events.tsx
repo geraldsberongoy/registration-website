@@ -23,35 +23,53 @@ interface ActiveEventsProps {
 export const ActiveEvents: React.FC<ActiveEventsProps> = ({ events }) => {
   const router = useRouter();
   const [filterCapacity, setFilterCapacity] = useState<string>("all");
-  // Show all statuses by default so newly created "upcoming" events appear
+  // Show all statuses by default so newly created events appear
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date");
+
+  const getCapacityMetrics = (event: Event) => {
+    const registered = Math.max(event.registered, 0);
+    const safeCapacity = Number.isFinite(event.capacity) && event.capacity > 0
+      ? event.capacity
+      : null;
+    const rawPercentage = safeCapacity
+      ? Math.round((registered / safeCapacity) * 100)
+      : null;
+    const fillPercentage = rawPercentage === null
+      ? 0
+      : Math.min(Math.max(rawPercentage, 0), 100);
+
+    return { registered, safeCapacity, rawPercentage, fillPercentage };
+  };
 
   const filteredEvents = events
     .filter((event) => {
       // Status filter
-      // Treat "upcoming" events as active in this UI
-      if (
-        filterStatus === "active" &&
-        !["active", "upcoming"].includes(event.status)
-      )
+      if (filterStatus === "active" && event.status !== "active")
         return false;
       if (filterStatus === "completed" && event.status !== "completed")
         return false;
 
       // Capacity filter
-      const percentage = Math.round((event.registered / event.capacity) * 100);
-      if (filterCapacity === "low" && percentage >= 70) return false;
-      if (filterCapacity === "medium" && (percentage < 70 || percentage >= 90))
+      const { rawPercentage } = getCapacityMetrics(event);
+      if (filterCapacity !== "all" && rawPercentage === null) return false;
+      if (filterCapacity === "low" && (rawPercentage ?? 0) >= 70) return false;
+      if (
+        filterCapacity === "medium" &&
+        ((rawPercentage ?? 0) < 70 || (rawPercentage ?? 0) >= 90)
+      )
         return false;
-      if (filterCapacity === "high" && percentage < 90) return false;
+      if (filterCapacity === "high" && (rawPercentage ?? 0) < 90) return false;
       return true;
     })
     .sort((a, b) => {
       if (sortBy === "date")
         return new Date(a.date).getTime() - new Date(b.date).getTime();
-      if (sortBy === "capacity")
-        return b.registered / b.capacity - a.registered / a.capacity;
+      if (sortBy === "capacity") {
+        const aPct = getCapacityMetrics(a).rawPercentage ?? -1;
+        const bPct = getCapacityMetrics(b).rawPercentage ?? -1;
+        return bPct - aPct;
+      }
       return 0;
     });
 
@@ -151,15 +169,11 @@ export const ActiveEvents: React.FC<ActiveEventsProps> = ({ events }) => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map((event) => {
-          const safeCapacity = event.capacity > 0 ? event.capacity : 0;
-          const percentage =
-            safeCapacity > 0
-              ? Math.round((event.registered / safeCapacity) * 100)
-              : 0;
-          const spotsLeft =
-            safeCapacity > 0
-              ? Math.max(safeCapacity - event.registered, 0)
-              : "Unlimited";
+          const { registered, safeCapacity, rawPercentage, fillPercentage } =
+            getCapacityMetrics(event);
+          const spotsLeft = safeCapacity
+            ? Math.max(safeCapacity - registered, 0)
+            : "Unlimited";
           return (
             <div
               key={event.id}
@@ -239,20 +253,20 @@ export const ActiveEvents: React.FC<ActiveEventsProps> = ({ events }) => {
                         fontFamily: "Urbanist, sans-serif",
                       }}
                     >
-                      {event.registered} / {event.capacity}
+                      {registered} / {safeCapacity ?? "Unlimited"}
                     </span>
                   </div>
                   <div className="relative">
                     <div className="w-full bg-gradient-to-r from-[#0E1924] to-[#0B1F23] rounded-full h-3 overflow-hidden border border-[#06b6d4]/20">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                          percentage >= 90
+                          (rawPercentage ?? 0) >= 90
                             ? "bg-gradient-to-r from-red-500 via-orange-500 to-red-600"
-                            : percentage >= 70
+                            : (rawPercentage ?? 0) >= 70
                             ? "bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600"
                             : "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600"
                         } shadow-lg`}
-                        style={{ width: `${percentage}%` }}
+                        style={{ width: `${fillPercentage}%` }}
                       >
                         <div className="h-full w-full bg-gradient-to-r from-white/20 to-transparent" />
                       </div>
@@ -261,15 +275,15 @@ export const ActiveEvents: React.FC<ActiveEventsProps> = ({ events }) => {
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-sm font-bold ${
-                        percentage >= 90
+                        (rawPercentage ?? 0) >= 90
                           ? "text-red-400"
-                          : percentage >= 70
+                          : (rawPercentage ?? 0) >= 70
                           ? "text-amber-400"
                           : "text-emerald-400"
                       }`}
                       style={{ fontFamily: "Urbanist, sans-serif" }}
                     >
-                      {percentage}% filled
+                      {rawPercentage === null ? "N/A" : `${rawPercentage}% filled`}
                     </span>
                     <span
                       className="text-xs text-gray-400"

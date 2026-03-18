@@ -1,6 +1,7 @@
 import { getEventBySlug } from "@/repositories/eventRepository";
 import { getGuestCountByEvent } from "@/repositories/guestRepository";
 import { EventData, Question } from "@/types/event";
+import { isRegistrationOpenFromDb } from "@/utils/registration-open";
 
 function mapRowToEvent(row: any): EventData {
   const startDateObj = row.start_date ? new Date(row.start_date) : null;
@@ -35,6 +36,11 @@ function mapRowToEvent(row: any): EventData {
   return {
     slug: row.slug,
     title: row.event_name ?? "Untitled Event",
+    status: row.status ?? "active",
+    registrationOpen: isRegistrationOpenFromDb({
+      registration_open: row.registration_open,
+      status: row.status,
+    }),
     organizerId: row.organizer_id,
     startDate: startDateObj ? startDateObj.toISOString().slice(0, 10) : "",
     startTime: startDateObj ? startDateObj.toISOString().slice(11, 16) : "",
@@ -142,10 +148,11 @@ export async function updateEventDetails(
 export async function updateEventSettings(
   slug: string,
   requireApproval: boolean,
+  registrationOpen: boolean,
 ) {
   const { updateEventSettings: repoUpdateSettings } =
     await import("@/repositories/eventRepository");
-  await repoUpdateSettings(slug, requireApproval);
+  await repoUpdateSettings(slug, requireApproval, registrationOpen);
 }
 
 export async function saveRegistrationQuestions(
@@ -281,7 +288,8 @@ export async function createEvent(
     capacity: parsedCapacity,
     require_approval: eventData.requireApproval || false,
     form_questions: formQuestions,
-    status: "upcoming",
+    status: "active",
+    registration_open: true,
     cover_image: eventData.coverImage || null,
   };
 

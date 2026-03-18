@@ -4,9 +4,10 @@ import React, { useState } from "react";
 import { EventData } from "@/types/event";
 import {
   updateEventDetailsAction,
-  updateEventSettingsAction
+  updateEventSettingsAction,
 } from "@/actions/eventActions";
 import { RegistrationQuestionsEditor } from "./RegistrationQuestionsEditor";
+import { isRegistrationOpen as resolveRegistrationOpen } from "@/utils/registration-open";
 
 interface EventManagementFormProps {
   event: EventData;
@@ -19,7 +20,7 @@ async function updateEventDetailsFormAction(
   slug: string,
   formData: FormData
 ): Promise<void> {
-  await updateEventDetailsAction({
+  const result = await updateEventDetailsAction({
     slug,
     title: formData.get("title") as string,
     description: formData.get("description") as string,
@@ -30,16 +31,25 @@ async function updateEventDetailsFormAction(
     capacity: formData.get("capacity") as string,
     ticketPrice: formData.get("ticketPrice") as string,
   });
+
+  if (!result.success) {
+    throw new Error(result.error || "Failed to update event details.");
+  }
 }
 
 async function updateEventSettingsFormAction(
   slug: string,
-  formData: FormData
+  formData: FormData,
 ): Promise<void> {
-  await updateEventSettingsAction({
+  const result = await updateEventSettingsAction({
     slug,
     requireApproval: formData.get("requireApproval") === "on",
+    registrationOpen: formData.get("registrationOpen") === "on",
   });
+
+  if (!result.success) {
+    throw new Error(result.error || "Failed to update event settings.");
+  }
 }
 
 export function EventManagementForm({
@@ -49,20 +59,40 @@ export function EventManagementForm({
   onSuccess,
 }: EventManagementFormProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const registrationOpenValue = resolveRegistrationOpen({
+    registrationOpen: event.registrationOpen,
+    status: event.status,
+  });
 
   const handleSuccess = () => {
+    setErrorMessage(null);
     setSuccessMessage("Changes saved successfully.");
     onSuccess();
   };
 
   const updateDetailsAction = async (formData: FormData) => {
-    await updateEventDetailsFormAction(slug, formData);
-    handleSuccess();
+    try {
+      await updateEventDetailsFormAction(slug, formData);
+      handleSuccess();
+    } catch (error) {
+      setSuccessMessage(null);
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to save changes.",
+      );
+    }
   };
 
   const updateSettingsAction = async (formData: FormData) => {
-    await updateEventSettingsFormAction(slug, formData);
-    handleSuccess();
+    try {
+      await updateEventSettingsFormAction(slug, formData);
+      handleSuccess();
+    } catch (error) {
+      setSuccessMessage(null);
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to save settings.",
+      );
+    }
   };
 
   return (
@@ -80,6 +110,25 @@ export function EventManagementForm({
               type="button"
               onClick={() => setSuccessMessage(null)}
               className="font-montserrat px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white text-sm font-medium transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {errorMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-[#0a1520] border border-red-400/40 rounded-2xl px-6 py-5 max-w-sm w-[90%] text-center shadow-xl shadow-red-500/20">
+            <h3 className="font-urbanist text-lg font-bold text-red-300 mb-2">
+              Save Failed
+            </h3>
+            <p className="font-urbanist text-sm text-red-100 mb-4">
+              {errorMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => setErrorMessage(null)}
+              className="font-montserrat px-5 py-2.5 bg-red-500 hover:bg-red-600 rounded-lg text-white text-sm font-medium transition-colors"
             >
               Close
             </button>
@@ -221,7 +270,11 @@ export function EventManagementForm({
           Settings
         </h2>
 
-        <form action={updateSettingsAction} className="space-y-4">
+        <form
+          key={`settings-${slug}-${event.requireApproval}-${registrationOpenValue}`}
+          action={updateSettingsAction}
+          className="space-y-4"
+        >
           <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-lg gap-4">
             <div className="min-w-0">
               <p className="font-urbanist text-white font-medium text-base mb-1">
@@ -245,6 +298,28 @@ export function EventManagementForm({
             </label>
           </div>
 
+          <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-lg gap-4">
+            <div className="min-w-0">
+              <p className="font-urbanist text-white font-medium text-base mb-1">
+                Registration Open
+              </p>
+              <p className="font-urbanist text-white/60 text-sm">
+                Allow new attendees to register for this event
+              </p>
+            </div>
+
+            <label className="flex items-center gap-3 select-none">
+              <input
+                type="checkbox"
+                name="registrationOpen"
+                defaultChecked={registrationOpenValue}
+                className="w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-600 focus:ring-cyan-500"
+              />
+              <span className="font-urbanist text-white/80 text-sm">
+                Enabled
+              </span>
+            </label>
+          </div>
           <div className="flex justify-end">
             <button
               type="submit"
