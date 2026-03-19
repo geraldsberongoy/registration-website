@@ -98,6 +98,50 @@ export const submitSurveyResponseAction = withActionErrorHandler(
   },
 );
 
+export const regenerateCertificateAction = withActionErrorHandler(
+  async (slug: string) => {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new UnauthorizedError(
+        "You must be logged in to regenerate a certificate.",
+      );
+    }
+
+    // Fetch user profile
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("first_name, last_name")
+      .eq("users_id", user.id)
+      .single();
+
+    let userName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.first_name ||
+      "Participant";
+
+    // Prefer database record if available
+    if (userProfile?.first_name && userProfile?.last_name) {
+      userName = `${userProfile.first_name} ${userProfile.last_name}`;
+    } else if (userProfile?.first_name) {
+      userName = userProfile.first_name;
+    }
+
+    const certificateBase64 = await generateCertificate(userName, slug);
+
+    logger.info(
+      `Certificate regenerated for event: ${slug} by user: ${user.id}`,
+    );
+
+    return {
+      certificateBase64,
+    };
+  },
+);
+
 export const getSurveyDashboardStatsAction = withActionErrorHandler(
   async (slug: string) => {
     if (!(await canManageEvent(slug))) {
@@ -111,7 +155,9 @@ export const getSurveyDashboardStatsAction = withActionErrorHandler(
 export const getSurveyDashboardDetailsAction = withActionErrorHandler(
   async (slug: string) => {
     if (!(await canManageEvent(slug))) {
-      logger.warn(`Unauthorized survey dashboard details access for slug: ${slug}`);
+      logger.warn(
+        `Unauthorized survey dashboard details access for slug: ${slug}`,
+      );
       throw new UnauthorizedError("Unauthorized");
     }
     return await getSurveyDashboardDetails(slug);
