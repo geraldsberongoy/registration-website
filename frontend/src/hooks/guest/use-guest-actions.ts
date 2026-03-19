@@ -3,7 +3,6 @@ import { Guest } from "@/types/guest";
 import {
   updateGuestStatusAction,
   deleteGuestAction,
-  exportGuestsAction,
   updateGuestIsGoingAction,
 } from "@/actions/registrantActions";
 import { downloadCSV } from "@/utils/fileDownload";
@@ -111,24 +110,78 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
     [updateGuestStatusDirect, showSuccess, showError],
   );
 
-  const handleExport = useCallback(async () => {
-    const result = await exportGuestsAction(slug);
-    const csvData =
-      result.success &&
-      result.data &&
-      typeof result.data === "object" &&
-      "csvData" in result.data &&
-      typeof result.data.csvData === "string"
-        ? result.data.csvData
-        : null;
+  const handleExport = useCallback(
+    (guestsToExport: Guest[]) => {
+      if (guestsToExport.length === 0) {
+        showError("No guests to export");
+        return;
+      }
 
-    if (csvData) {
+      const allQuestionKeys = Array.from(
+        new Set(
+          guestsToExport.flatMap((guest) =>
+            guest.form_answers ? Object.keys(guest.form_answers) : [],
+          ),
+        ),
+      );
+
+      const getStatusLabel = (guest: Guest) => {
+        if (!guest.is_registered) return "Pending";
+        if (guest.is_going === false) return "Not Going";
+        return "Registered";
+      };
+
+      const getGoingLabel = (guest: Guest) => {
+        if (!guest.is_registered) return "-";
+        if (guest.is_going === true) return "Going";
+        if (guest.is_going === false) return "Not Going";
+        return "-";
+      };
+
+      const headers = [
+        "Name",
+        "Email",
+        "Status",
+        "Going",
+        "Checked In",
+        "Terms Accepted",
+        ...allQuestionKeys,
+      ];
+
+      const escapeCell = (value: unknown) =>
+        `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+      const rows = guestsToExport.map((guest) => {
+        const baseRow = [
+          `${guest.users?.first_name || ""} ${guest.users?.last_name || ""}`.trim(),
+          guest.users?.email || "",
+          getStatusLabel(guest),
+          getGoingLabel(guest),
+          guest.check_in ? "Yes" : "No",
+          guest.terms_approval ? "Yes" : "No",
+        ];
+
+        const answerCols = allQuestionKeys.map(
+          (question) => guest.form_answers?.[question] ?? "",
+        );
+
+        return [...baseRow, ...answerCols];
+      });
+
+      const csvData = [
+        headers.join(","),
+        ...rows.map((row) => row.map(escapeCell).join(",")),
+      ].join("\n");
+
       downloadCSV(csvData, `event-guests-${slug}.csv`);
-      showSuccess("Guest list exported successfully");
-    } else {
-      showError(result.error || "Failed to export guests");
-    }
-  }, [slug, showSuccess, showError]);
+      showSuccess(
+        `Exported ${guestsToExport.length} guest${
+          guestsToExport.length > 1 ? "s" : ""
+        }`,
+      );
+    },
+    [slug, showSuccess, showError],
+  );
 
   const handleBulkStatusChange = useCallback(
     async (
