@@ -22,11 +22,19 @@ export function useGuestFilter(guests: Guest[]) {
     const statusFilteredGuests = guests.filter((guest) => {
       if (!guest.users) return false;
 
-      const matchesStatus = statusFilter === "all" || 
-        (statusFilter === "registered" ? guest.is_registered && guest.is_going !== false
-          : statusFilter === "pending" ? !guest.is_registered
-          : statusFilter === "not-going" ? guest.is_registered && guest.is_going === false
-          : true);
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "registered"
+          ? guest.is_registered && guest.is_going !== false
+          : statusFilter === "pending"
+            ? !guest.is_registered
+            : statusFilter === "not-going"
+              ? guest.is_registered && guest.is_going === false
+              : statusFilter === "not-going-or-dash"
+                ? guest.is_going !== true
+                : statusFilter === "dash-only"
+                  ? !guest.is_registered || guest.is_going === null
+                : true);
 
       return matchesStatus;
     });

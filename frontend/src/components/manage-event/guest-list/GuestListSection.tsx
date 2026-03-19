@@ -341,8 +341,8 @@ export function GuestListSection({
               </p>
             </div>
             <GuestListHeader
-              guestCount={guests.length}
-              onExport={handleExport}
+              guestCount={filteredGuests.length}
+              onExport={() => handleExport(filteredGuests)}
               onCheckIn={() => setIsScannerOpen(true)}
             />
           </div>
