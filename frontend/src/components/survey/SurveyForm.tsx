@@ -11,6 +11,7 @@ import {
   Download,
   FileText,
   RefreshCw,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   submitSurveyResponseAction,
@@ -18,7 +19,7 @@ import {
 } from "@/actions/surveyActions";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { downloadSvgAsPdf } from "@/utils/svgToPdf";
+import { downloadSvgAsPdf, downloadSvgAsPng } from "@/utils/svgToPdf";
 
 interface UserProfile {
   first_name: string | null;
@@ -53,6 +54,7 @@ export default function SurveyForm({
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isPdfDownloading, setIsPdfDownloading] = useState(false);
+  const [isPngDownloading, setIsPngDownloading] = useState(false);
   const [isRegeneratingCert, setIsRegeneratingCert] = useState(false);
   // If initialAnswers exists, the view mode condition below handles the summary view.
   // If initialAnswers is null, we render the form directly in 'create' mode (isEditing=false).
@@ -71,6 +73,18 @@ export default function SurveyForm({
       // Silently fail — user can still download SVG fallback
     } finally {
       setIsPdfDownloading(false);
+    }
+  };
+
+  const handlePngDownload = async () => {
+    if (!certificateBase64) return;
+    setIsPngDownloading(true);
+    try {
+      await downloadSvgAsPng(certificateBase64, `Certificate_${slug}.png`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPngDownloading(false);
     }
   };
 
@@ -179,14 +193,14 @@ export default function SurveyForm({
               />
             </div>
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-              <a
-                href={`data:image/svg+xml;base64,${certificateBase64}`}
-                download={`Certificate_${slug}.svg`}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 sm:px-8 py-4 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white rounded-xl font-bold transition-all shadow-xl hover:shadow-cyan-500/30 font-urbanist tracking-wide"
+              <button
+                onClick={handlePngDownload}
+                disabled={isPngDownloading}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 sm:px-8 py-4 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 disabled:opacity-50 text-white rounded-xl font-bold transition-all shadow-xl hover:shadow-cyan-500/30 font-urbanist tracking-wide"
               >
-                <Download className="w-5 h-5" />
-                Download SVG
-              </a>
+                <ImageIcon className="w-5 h-5" />
+                {isPngDownloading ? "Generating..." : "Download PNG"}
+              </button>
               <button
                 onClick={handlePdfDownload}
                 disabled={isPdfDownloading}
@@ -231,14 +245,14 @@ export default function SurveyForm({
               />
             </div>
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-0">
-              <a
-                href={`data:image/svg+xml;base64,${certificateBase64}`}
-                download={`Certificate_${slug}.svg`}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 sm:px-8 py-4 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white rounded-xl font-bold transition-all shadow-xl hover:shadow-cyan-500/30 font-urbanist tracking-wide"
+              <button
+                onClick={handlePngDownload}
+                disabled={isPngDownloading}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 sm:px-8 py-4 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 disabled:opacity-50 text-white rounded-xl font-bold transition-all shadow-xl hover:shadow-cyan-500/30 font-urbanist tracking-wide"
               >
-                <Download className="w-5 h-5" />
-                Download SVG
-              </a>
+                <ImageIcon className="w-5 h-5" />
+                {isPngDownloading ? "Generating..." : "Download PNG"}
+              </button>
               <button
                 onClick={handlePdfDownload}
                 disabled={isPdfDownloading}
