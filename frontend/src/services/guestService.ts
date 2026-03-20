@@ -33,13 +33,14 @@ export async function exportGuestsToCSV(slug: string): Promise<ExportGuestsResul
     ).filter((k) => !orderedKeys.includes(k));
     const allQuestionKeys = [...orderedKeys, ...extraKeys];
 
-    const headers = ["Name", "Email", "Status", "Checked In", "Terms Accepted", ...allQuestionKeys];
+    const headers = ["Name", "Email", "Status", "Registered At", "Checked In", "Terms Accepted", ...allQuestionKeys];
     const rows = guests.map((guest) => {
       const user = guest.users;
       const baseRow = [
         `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
         user?.email || '',
         guest.is_registered ? "Registered" : "Pending",
+        guest.created_at || '',
         guest.check_in ? "Yes" : "No",
         guest.terms_approval ? "Yes" : "No",
       ];

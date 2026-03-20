@@ -36,6 +36,7 @@ export async function GET(
       .select(
         `
         registrant_id,
+        created_at,
         event_id,
         users_id,
         terms_approval,
@@ -62,7 +63,11 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ guests: (guests || []) as unknown as Guest[] });
+    const guestsForEvent = (guests || []).filter(
+      (guest) => guest.event_id === event.event_id,
+    );
+
+    return NextResponse.json({ guests: guestsForEvent as unknown as Guest[] });
   } catch (error) {
     console.error("Error fetching registrants:", error);
     return NextResponse.json(

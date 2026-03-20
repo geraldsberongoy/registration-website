@@ -411,7 +411,7 @@ export function GuestListSection({
           ) : (
             /* Guest Table */
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px]">
+              <table className="w-full min-w-[900px]">
                 <GuestTableHeader
                   allSelected={allSelected}
                   someSelected={someSelected}

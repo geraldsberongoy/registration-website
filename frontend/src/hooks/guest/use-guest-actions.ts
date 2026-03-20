@@ -143,6 +143,7 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
         "Email",
         "Status",
         "Going",
+        "Registered At",
         "Checked In",
         "Terms Accepted",
         ...allQuestionKeys,
@@ -157,6 +158,7 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
           guest.users?.email || "",
           getStatusLabel(guest),
           getGoingLabel(guest),
+          guest.created_at || "",
           guest.check_in ? "Yes" : "No",
           guest.terms_approval ? "Yes" : "No",
         ];

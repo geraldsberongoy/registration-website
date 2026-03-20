@@ -1,5 +1,6 @@
 export interface Guest {
   registrant_id: string;
+  created_at?: string | null;
   event_id: string;
   users_id: string;
   terms_approval: boolean;

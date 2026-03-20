@@ -69,8 +69,14 @@ export function GuestTableHeader({
         <th className="font-urbanist text-left text-xs md:text-sm font-medium text-white/60 pb-3 px-2 hidden md:table-cell">
           Going
         </th>
+        <th className="font-urbanist text-left text-xs md:text-sm font-medium text-white/60 pb-3 px-2 hidden md:table-cell">
+          Registered At
+        </th>
         <th className="font-urbanist text-center text-xs md:text-sm font-medium text-white/60 pb-3 px-2 hidden md:table-cell">
           Ticket
+        </th>
+        <th className="font-urbanist text-center text-xs md:text-sm font-medium text-white/60 pb-3 px-2">
+          View
         </th>
         <th className="font-urbanist text-right text-xs md:text-sm font-medium text-white/60 pb-3 px-2">
           Actions

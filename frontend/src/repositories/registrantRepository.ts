@@ -11,6 +11,7 @@ export async function getRegistrantByUserAndEvent(
     .select(
       `
       registrant_id,
+      created_at,
       event_id,
       users_id,
       terms_approval,
@@ -183,7 +184,9 @@ export async function getRegistrantsByEvent(eventId: string): Promise<Guest[]> {
     throw new Error(`Failed to fetch registrants: ${error.message}`);
   }
 
-  return (data || []) as unknown as Guest[];
+  return ((data || []) as unknown as Guest[]).filter(
+    (guest) => guest.event_id === eventId,
+  );
 }
 
 export async function getRegistrantById(

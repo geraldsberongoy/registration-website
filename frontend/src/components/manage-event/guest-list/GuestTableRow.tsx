@@ -60,6 +60,17 @@ export function GuestTableRow({
     `${guest.users?.first_name || ""} ${guest.users?.last_name || ""}`.trim() ||
     "Guest";
 
+  const getRegisteredAtLabel = (value?: string | null) => {
+    if (!value) return "-";
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleString();
+    }
+    return value;
+  };
+
+  const registeredAtLabel = getRegisteredAtLabel(guest.created_at);
+
   return (
     <>
       <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
@@ -147,6 +158,9 @@ export function GuestTableRow({
             <span className="text-xs text-white/30">—</span>
           )}
         </td>
+        <td className="font-urbanist text-white/80 text-xs py-4 px-2 hidden md:table-cell whitespace-nowrap">
+          {registeredAtLabel}
+        </td>
         <td className="py-4 px-2 hidden md:table-cell">
           <div className="flex justify-center">
             {guest.is_registered && guest.is_going === true ? (
@@ -187,7 +201,7 @@ export function GuestTableRow({
           </div>
         </td>
         <td className="py-4 px-2">
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-center">
             <button
               onClick={() => onViewAnswers(guest)}
               disabled={isPending}
@@ -196,6 +210,10 @@ export function GuestTableRow({
             >
               <Eye size={16} />
             </button>
+          </div>
+        </td>
+        <td className="py-4 px-2">
+          <div className="flex justify-end gap-2">
             <button
               onClick={() => onDelete(guest.registrant_id)}
               disabled={isPending}
