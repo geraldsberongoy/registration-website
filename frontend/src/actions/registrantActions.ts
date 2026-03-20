@@ -87,6 +87,18 @@ export const updateGuestIsGoingAction = withActionErrorHandler(
   },
 );
 
+export const updateGuestCheckInAction = withActionErrorHandler(
+  async (data: { guestId: string; checkedIn: boolean }, slug: string) => {
+    if (!(await canManageEvent(slug))) {
+      throw new UnauthorizedError("Unauthorized");
+    }
+    const { updateGuestCheckInStatus } =
+      await import("@/services/registrantService");
+    await updateGuestCheckInStatus(data.guestId, data.checkedIn);
+    revalidatePath(`/admin/events/${slug}/manage`);
+  },
+);
+
 export const setIsGoingAction = withActionErrorHandler(
   async (eventSlug: string, isGoing: boolean) => {
     const { createClient } = await import("@/lib/supabase/server");

@@ -4,6 +4,7 @@ import {
   updateGuestStatusAction,
   deleteGuestAction,
   updateGuestIsGoingAction,
+  updateGuestCheckInAction,
 } from "@/actions/registrantActions";
 import { downloadCSV } from "@/utils/fileDownload";
 import { useNotification } from "@/hooks/use-notification";
@@ -30,7 +31,10 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
     }> => {
       let result;
       if (newStatus === "not-going") {
-        result = await updateGuestIsGoingAction({ guestId, isGoing: false }, slug);
+        result = await updateGuestIsGoingAction(
+          { guestId, isGoing: false },
+          slug,
+        );
       } else {
         const isRegistered = newStatus === "registered";
         result = await updateGuestStatusAction({ guestId, isRegistered }, slug);
@@ -209,7 +213,9 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
 
       startTransition(async () => {
         const results = await Promise.all(
-          guests.map((g) => updateGuestStatusDirect(g.registrant_id, newStatus)),
+          guests.map((g) =>
+            updateGuestStatusDirect(g.registrant_id, newStatus),
+          ),
         );
 
         const failed = results.filter((r) => !r.success).length;
@@ -229,6 +235,48 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
     [updateGuestStatusDirect, onRefresh, showSuccess, showError],
   );
 
+  const handleCheckIn = useCallback(
+    (guestId: string, checkedIn: boolean) => {
+      startTransition(async () => {
+        const result = await updateGuestCheckInAction(
+          { guestId, checkedIn },
+          slug,
+        );
+
+        if (result.success) {
+          onRefresh();
+          showSuccess(checkedIn ? "Guest checked in" : "Check-in removed");
+        } else {
+          showError(result.error || "Failed to update check-in status");
+        }
+      });
+    },
+    [slug, onRefresh, showSuccess, showError],
+  );
+
+  const handleGoingChange = useCallback(
+    (guestId: string, isGoing: boolean) => {
+      startTransition(async () => {
+        const result = await updateGuestIsGoingAction(
+          { guestId, isGoing },
+          slug,
+        );
+
+        if (result.success) {
+          onRefresh();
+          showSuccess(
+            isGoing
+              ? "Guest status updated to Going"
+              : "Guest status updated to Not Going",
+          );
+        } else {
+          showError(result.error || "Failed to update going status");
+        }
+      });
+    },
+    [slug, onRefresh, showSuccess, showError],
+  );
+
   return {
     isPending,
     handleDeleteGuest,
@@ -236,5 +284,7 @@ export function useGuestActions(slug: string, onRefresh: () => void) {
     handleExport,
     handleBulkStatusChange,
     updateGuestStatusDirect,
+    handleCheckIn,
+    handleGoingChange,
   };
 }

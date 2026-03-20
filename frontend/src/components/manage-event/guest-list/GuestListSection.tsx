@@ -53,7 +53,9 @@ export function GuestListSection({
   >("registered");
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
   const [showStatusQueueModal, setShowStatusQueueModal] = useState(false);
-  const [statusQueueItems, setStatusQueueItems] = useState<StatusQueueItem[]>([]);
+  const [statusQueueItems, setStatusQueueItems] = useState<StatusQueueItem[]>(
+    [],
+  );
   const [statusQueueError, setStatusQueueError] = useState<string | null>(null);
   const [isQueueUpdating, setIsQueueUpdating] = useState(false);
 
@@ -83,6 +85,8 @@ export function GuestListSection({
     handleStatusChange,
     handleExport,
     updateGuestStatusDirect,
+    handleCheckIn,
+    handleGoingChange,
   } = useGuestActions(slug, onRefresh);
 
   const selectedGuests = guests.filter((g) =>
@@ -139,7 +143,10 @@ export function GuestListSection({
           ),
         );
 
-        const result = await updateGuestStatusDirect(guest.registrant_id, status);
+        const result = await updateGuestStatusDirect(
+          guest.registrant_id,
+          status,
+        );
         if (result.success) {
           onGuestStatusUpdated(guest.registrant_id, status, result.patch);
           setStatusQueueItems((prev) =>
@@ -166,7 +173,9 @@ export function GuestListSection({
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unexpected status update error";
+        error instanceof Error
+          ? error.message
+          : "Unexpected status update error";
       setStatusQueueError(message);
       showError(message);
     } finally {
@@ -228,7 +237,9 @@ export function GuestListSection({
           <div className="relative z-[230] w-full max-w-2xl overflow-hidden rounded-2xl bg-[#0a1520] border border-white/10 shadow-2xl p-5 font-urbanist">
             <div className="flex items-center justify-between gap-3 mb-3">
               <h2 className="text-white text-lg font-semibold">
-                {isQueueUpdating ? "Updating Guests..." : "Status Update Summary"}
+                {isQueueUpdating
+                  ? "Updating Guests..."
+                  : "Status Update Summary"}
               </h2>
               <button
                 type="button"
@@ -249,19 +260,28 @@ export function GuestListSection({
             <div className="text-xs text-white/70 mb-3">
               Updated:{" "}
               <span className="text-emerald-300">
-                {statusQueueItems.filter((item) => item.status === "updated").length}
+                {
+                  statusQueueItems.filter((item) => item.status === "updated")
+                    .length
+                }
               </span>
               {" | "}
               Failed:{" "}
               <span className="text-rose-300">
-                {statusQueueItems.filter((item) => item.status === "error").length}
+                {
+                  statusQueueItems.filter((item) => item.status === "error")
+                    .length
+                }
               </span>
               {" | "}
               Remaining:{" "}
               <span className="text-cyan-300">
-                {statusQueueItems.filter(
-                  (item) => item.status === "queued" || item.status === "updating",
-                ).length}
+                {
+                  statusQueueItems.filter(
+                    (item) =>
+                      item.status === "queued" || item.status === "updating",
+                  ).length
+                }
               </span>
             </div>
 
@@ -300,7 +320,10 @@ export function GuestListSection({
                   ))}
                   {isQueueUpdating && statusQueueItems.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="px-3 py-6 text-center text-white/50">
+                      <td
+                        colSpan={3}
+                        className="px-3 py-6 text-center text-white/50"
+                      >
                         Preparing queue...
                       </td>
                     </tr>
@@ -434,6 +457,8 @@ export function GuestListSection({
                       isPending={isBusy}
                       onSelectGuest={handleSelectGuest}
                       onStatusChange={handleRowStatusChange}
+                      onCheckInChange={handleCheckIn}
+                      onGoingChange={handleGoingChange}
                       onViewAnswers={(g) => {
                         setSelectedGuest(g);
                         setShowAnswersModal(true);

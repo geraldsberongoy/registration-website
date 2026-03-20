@@ -15,6 +15,8 @@ interface GuestTableRowProps {
     guestId: string,
     newStatus: "registered" | "pending" | "not-going",
   ) => void;
+  onCheckInChange: (guestId: string, checked: boolean) => void;
+  onGoingChange: (guestId: string, isGoing: boolean) => void;
   onViewAnswers: (guest: Guest) => void;
   onDelete: (guestId: string) => void;
 }
@@ -25,6 +27,8 @@ export function GuestTableRow({
   isPending,
   onSelectGuest,
   onStatusChange,
+  onCheckInChange,
+  onGoingChange,
   onViewAnswers,
   onDelete,
 }: GuestTableRowProps) {
@@ -142,17 +146,42 @@ export function GuestTableRow({
         <td className="py-4 px-2 hidden md:table-cell">
           {guest.is_registered ? (
             guest.is_going === false ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
+              <button
+                onClick={() => onGoingChange(guest.registrant_id, true)}
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+              >
                 <X size={11} />
                 Not Going
-              </span>
+              </button>
             ) : guest.is_going === true ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+              <button
+                onClick={() => onGoingChange(guest.registrant_id, false)}
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+              >
                 <Check size={11} />
                 Going
-              </span>
+              </button>
             ) : (
-              <span className="text-xs text-white/30">—</span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => onGoingChange(guest.registrant_id, true)}
+                  disabled={isPending}
+                  className="px-2 py-1 rounded border border-green-500/30 bg-green-500/10 text-green-400 text-xs hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                  title="Mark as Going"
+                >
+                  <Check size={11} />
+                </button>
+                <button
+                  onClick={() => onGoingChange(guest.registrant_id, false)}
+                  disabled={isPending}
+                  className="px-2 py-1 rounded border border-red-500/30 bg-red-500/10 text-red-400 text-xs hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                  title="Mark as Not Going"
+                >
+                  <X size={11} />
+                </button>
+              </div>
             )
           ) : (
             <span className="text-xs text-white/30">—</span>
@@ -166,18 +195,31 @@ export function GuestTableRow({
             {guest.is_registered && guest.is_going === true ? (
               <div className="inline-flex items-center gap-2">
                 {guest.check_in ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-2.5 py-1 text-xs font-medium text-cyan-300">
+                  <button
+                    onClick={() => onCheckInChange(guest.registrant_id, false)}
+                    disabled={isPending}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/20 px-2.5 py-1 text-xs font-medium text-cyan-300 hover:bg-cyan-500/30 transition-colors disabled:opacity-50"
+                  >
                     <Check size={11} />
                     Checked In
-                  </span>
+                  </button>
                 ) : guest.qr_data ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-300">
-                    Ready
-                  </span>
+                  <button
+                    onClick={() => onCheckInChange(guest.registrant_id, true)}
+                    disabled={isPending}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                  >
+                    Check In
+                  </button>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-yellow-500/30 bg-yellow-500/20 px-2.5 py-1 text-xs font-medium text-yellow-300">
-                    Missing
-                  </span>
+                  <button
+                    onClick={() => onCheckInChange(guest.registrant_id, true)}
+                    disabled={isPending}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-yellow-500/30 bg-yellow-500/20 px-2.5 py-1 text-xs font-medium text-yellow-300 hover:bg-yellow-500/30 transition-colors disabled:opacity-50"
+                    title="Manual Check In"
+                  >
+                    Manual Check In
+                  </button>
                 )}
 
                 {guest.qr_data && (

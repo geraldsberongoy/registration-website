@@ -96,8 +96,26 @@ export async function updateGuestIsGoing(guestId: string, isGoing: boolean) {
     .update({ is_going: isGoing })
     .eq("registrant_id", guestId);
 
-  if (error)
+  if (error) {
     throw new Error(`Failed to update guest is_going: ${error.message}`);
+  }
+}
+
+export async function updateGuestCheckIn(guestId: string, checkedIn: boolean) {
+  const supabase = await createClient();
+  const payload = {
+    check_in: checkedIn,
+    check_in_time: checkedIn ? new Date().toISOString() : null,
+  };
+
+  const { error } = await supabase
+    .from("registrants")
+    .update(payload)
+    .eq("registrant_id", guestId);
+
+  if (error) {
+    throw new Error(`Failed to update guest check-in: ${error.message}`);
+  }
 }
 
 export async function getRegistrantStatusEmailAndEvent(guestId: string) {

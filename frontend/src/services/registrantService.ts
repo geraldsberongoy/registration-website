@@ -203,6 +203,15 @@ export async function setIsGoing(guestId: string, isGoing: boolean) {
   return await updateGuestIsGoing(guestId, isGoing);
 }
 
+export async function updateGuestCheckInStatus(
+  guestId: string,
+  checkedIn: boolean,
+) {
+  const { updateGuestCheckIn } =
+    await import("@/repositories/registrantRepository");
+  return await updateGuestCheckIn(guestId, checkedIn);
+}
+
 export async function getEventRegistrants(eventId: string) {
   const { getRegistrantsByEvent } =
     await import("@/repositories/registrantRepository");
